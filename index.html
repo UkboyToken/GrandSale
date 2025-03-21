@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grand Sale Contract UI (Polygon Amoy)</title>
+    <title>Grand Sale (Polygon Amoy)</title>
     <style>
         body {
             font-family: 'Roboto', Arial, sans-serif;
@@ -1274,7 +1274,7 @@
 
         async function getTokenInfo(tokenAddress) {
             if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
-                return { name: "POLYGON", symbol: "POL", decimals: 18 };
+                return { name: "Polygon", symbol: "POL", decimals: 18 };
             }
             if (tokenInfoMap.has(tokenAddress)) {
                 return tokenInfoMap.get(tokenAddress);
