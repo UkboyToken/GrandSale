@@ -199,7 +199,7 @@
             <h1>Grand Sale (Polygon Amoy)</h1>
             <div class="wallet-status" id="wallet-status">
                 <button id="connect-wallet">Connect Wallet</button>
-                <button id="switch-account" style="display: none;">Switch Account</button>
+                <button id="switch-account" style="display: none;">Change Wallet</button>
                 <button id="add-amoy" style="display: inline-block;">Add Amoy Network</button>
                 <button id="add-sale-token" style="display: none;">Add Sale Token</button>
                 <div id="wallet-info" style="display: none;">
@@ -212,8 +212,8 @@
         </header>
         <nav>
             <button onclick="showSection('home')">Home</button>
-            <button onclick="showSection('owner')">Owner's Panel</button>
-            <button onclick="showSection('user')">User's Panel</button>
+            <button onclick="showSection('owner')">Admin</button>
+            <button onclick="showSection('user')">User</button>
         </nav>
         <div id="home" class="section active">
             <h2>Grand Sale Contract Information</h2>
@@ -234,7 +234,7 @@
             <div id="error-message"></div>
         </div>
         <div id="owner" class="section">
-            <h2>Owner Panel</h2>
+            <h2>Admin</h2>
             <div>
                 <h3>Manage Payment Tokens</h3>
                 <input type="text" id="payment-token-address" placeholder="Payment Token Address">
@@ -285,7 +285,7 @@
             <div id="error-message" class="error"></div>
         </div>
         <div id="user" class="section">
-            <h2>User Panel</h2>
+            <h2>User</h2>
             <div>
                 <h3>User Balance</h3>
                 <p>Sale Token Balance: <span id="user-sale-balance">0</span></p>
@@ -1269,7 +1269,8 @@
         const KNOWN_TOKENS = [
             NATIVE_TOKEN_ADDRESS,           // POL
             "0x108a44bd8dcffd4e22024715b8b5e03943a6380b", // TEST2
-            "0x4e52bca64a88ac1f13b65b923216649c678cb405"  // TEST3
+            "0x4e52bca64a88ac1f13b65b923216649c678cb405", // TEST3
+            "0x12ef3cc11847c308baaf7cb19b9a69d25e496dae"  // NEWTEST
         ];
 
         async function getTokenInfo(tokenAddress) {
