@@ -5,30 +5,210 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grand Sale (Polygon Amoy)</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
-        .container { max-width: 800px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        header { text-align: center; margin-bottom: 20px; }
-        nav { margin-bottom: 20px; }
-        nav button { margin-right: 10px; padding: 8px 16px; border: none; background-color: #007bff; color: #fff; border-radius: 5px; cursor: pointer; }
-        .section { display: none; }
-        .section.active { display: block; }
-        .wallet-status { margin-top: 20px; text-align: center; }
-        .wallet-connected { color: green; }
-        .wallet-instructions { margin-top: 10px; color: #555; }
-        .log-tabs { display: flex; justify-content: space-around; margin-top: 20px; }
-        .log-tab { padding: 10px; cursor: pointer; background-color: #f0f0f0; border-radius: 5px 5px 0 0; }
-        .log-tab.active { background-color: #007bff; color: #fff; }
-        .log-content { display: none; margin-top: 10px; padding: 10px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
-        .log-content.active { display: block; }
-        .log-table { width: 100%; border-collapse: collapse; }
-        .log-table th, .log-table td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-        .event-success { color: green; }
-        .event-error { color: red; }
-        .payment-tokens-table { width: 100%; border-collapse: collapse; margin-top: 15px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; }
-        .payment-tokens-table th, .payment-tokens-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        .payment-tokens-table th { background-color: #f2f2f2; }
-        .error { color: red; margin-top: 10px; }
-        #token-receive-info { margin-top: 10px; font-weight: bold; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+            color: #1a73e8;
+        }
+        nav {
+            margin: 20px 0;
+            text-align: center;
+        }
+        nav button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: none;
+            background-color: #34c759;
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        nav button:hover {
+            background-color: #2ba844;
+            transform: scale(1.05);
+        }
+        .section {
+            display: none;
+            padding: 15px;
+        }
+        .section.active {
+            display: block;
+        }
+        .wallet-status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .wallet-status button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            background-color: #1a73e8;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .wallet-status button:hover {
+            background-color: #1557b0;
+        }
+        .wallet-connected {
+            color: #34c759;
+            font-weight: bold;
+        }
+        .wallet-instructions {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff3cd;
+            color: #856404;
+            border-radius: 6px;
+            border: 1px solid #ffeeba;
+        }
+        .logs {
+            margin-top: 20px;
+            display: none;
+        }
+        .logs h3 {
+            background-color: #1a73e8;
+            color: #fff;
+            padding: 10px;
+            margin: 0;
+            border-radius: 6px 6px 0 0;
+            text-align: center;
+        }
+        .log-content {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 0 0 6px 6px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        .log-table th, .log-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+            word-wrap: break-word;
+        }
+        .log-table th:nth-child(1), .log-table td:nth-child(1) { width: 20%; }
+        .log-table th:nth-child(2), .log-table td:nth-child(2) { width: 20%; }
+        .log-table th:nth-child(3), .log-table td:nth-child(3) { width: 60%; }
+        .event-success { color: #28a745; }
+        .event-error { color: #dc3545; }
+        .contract-info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .contract-info-table th, .contract-info-table td {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        .contract-info-table th {
+            background-color: #1a73e8;
+            color: #fff;
+        }
+        .payment-tokens-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .payment-tokens-table th, .payment-tokens-table td {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        .payment-tokens-table th {
+            background-color: #34c759;
+            color: #fff;
+        }
+        .error {
+            color: #dc3545;
+            margin-top: 10px;
+            word-wrap: break-word;
+        }
+        #token-receive-info {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #1a73e8;
+        }
+        select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #333;
+            font-size: 1em;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        select:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 5px rgba(26, 115, 232, 0.5);
+            outline: none;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        button:not(nav button):not(.wallet-status button) {
+            padding: 8px 16px;
+            margin: 5px 0;
+            background-color: #1a73e8;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:not(nav button):not(.wallet-status button):hover {
+            background-color: #1557b0;
+        }
+        @media (max-width: 600px) {
+            nav button { display: block; margin: 10px auto; }
+            .wallet-status button { display: block; margin: 5px auto; }
+            .container { padding: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -38,7 +218,7 @@
             <div class="wallet-status" id="wallet-status">
                 <button id="connect-wallet">Connect Wallet</button>
                 <button id="switch-account" style="display: none;">Change Wallet</button>
-                <button id="add-amoy" style="display: inline-block;">Add Amoy Network</button>
+                <button id="add-amoy">Add Amoy Network</button>
                 <button id="add-sale-token" style="display: none;">Add Sale Token</button>
                 <div id="wallet-info" style="display: none;">
                     <p id="connected-address" class="wallet-connected"></p>
@@ -51,16 +231,25 @@
         <nav id="navigation">
             <button onclick="showSection('home')">Home</button>
             <button id="admin-nav" onclick="showSection('owner')" style="display: none;">Admin</button>
-            <button onclick="showSection('user')">User</button>
         </nav>
         <div id="home" class="section active">
-            <h2>Grand Sale Contract Information</h2>
-            <p>Contract Address: <span id="contract-address">Not Connected</span></p>
-            <p>Sale Token: <span id="sale-token">Not Connected</span></p>
-            <p>Total Unsold: <span id="total-unsold">Not Connected</span></p>
-            <p>Minimum Buy to Reward: <span id="min-buy-to-reward">Not Connected</span></p>
-            <p>Total Sold: <span id="total-sold">Not Connected</span></p>
-            <p>Total Rewarded: <span id="total-rewarded">Not Connected</span></p>
+            <h2>Grand Sale</h2>
+            <table class="contract-info-table">
+                <thead>
+                    <tr>
+                        <th>Detail</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Contract Address</td><td id="contract-address">Not Connected</td></tr>
+                    <tr><td>Sale Token</td><td id="sale-token">Not Connected</td></tr>
+                    <tr><td>Total Unsold</td><td id="total-unsold">Not Connected</td></tr>
+                    <tr><td>Minimum Buy to Reward</td><td id="min-buy-to-reward">Not Connected</td></tr>
+                    <tr><td>Total Sold</td><td id="total-sold">Not Connected</td></tr>
+                    <tr><td>Total Rewarded</td><td id="total-rewarded">Not Connected</td></tr>
+                </tbody>
+            </table>
             <div>
                 <h3>Accepted Payment Tokens</h3>
                 <table class="payment-tokens-table" id="payment-tokens-table">
@@ -75,6 +264,34 @@
                     <tbody id="payment-tokens-body"></tbody>
                 </table>
             </div>
+            <div>
+                <h3>Your Balance</h3>
+                <p>Sale Token Balance: <span id="user-sale-balance">0</span></p>
+            </div>
+            <div>
+                <h3>Increase Token Allowance</h3>
+                <select id="approve-token-select">
+                    <option value="">Select Payment Token</option>
+                </select>
+                <input type="number" id="approve-amount" placeholder="Amount to Approve" step="0.01">
+                <button onclick="approveToken()">Approve</button>
+            </div>
+            <div>
+                <h3>Buy Tokens</h3>
+                <select id="payment-token-select" onchange="updateTokenReceiveInfo()">
+                    <option value="">Select Payment Token</option>
+                </select>
+                <input type="number" id="payment-amount" placeholder="Amount" step="0.01" oninput="updateTokenReceiveInfo()">
+                <p id="token-receive-info"></p>
+                <button onclick="buyTokens()">Buy</button>
+            </div>
+            <div>
+                <h3>Send Sale Tokens</h3>
+                <input type="text" id="send-recipient" placeholder="Recipient Address">
+                <input type="number" id="send-amount" placeholder="Amount to Send" step="0.01">
+                <button onclick="sendTokens()">Send Tokens</button>
+            </div>
+            <div id="tx-status"></div>
             <div id="error-message" class="error"></div>
         </div>
         <div id="owner" class="section">
@@ -128,71 +345,25 @@
             <div id="tx-status"></div>
             <div id="error-message" class="error"></div>
         </div>
-        <div id="user" class="section">
-            <h2>User</h2>
-            <div>
-                <h3>User Balance</h3>
-                <p>Sale Token Balance: <span id="user-sale-balance">0</span></p>
+        <div id="logs" class="logs">
+            <h3>Logs</h3>
+            <div class="log-content">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Event</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-body"></tbody>
+                </table>
             </div>
-            <div>
-                <h3>Increase Token Allowance</h3>
-                <select id="approve-token-select">
-                    <option value="">Select Payment Token</option>
-                </select>
-                <input type="number" id="approve-amount" placeholder="Amount to Approve" step="0.01">
-                <button onclick="approveToken()">Approve</button>
-            </div>
-            <div>
-                <h3>Buy Tokens</h3>
-                <select id="payment-token-select" onchange="updateTokenReceiveInfo()">
-                    <option value="">Select Payment Token</option>
-                </select>
-                <input type="number" id="payment-amount" placeholder="Amount" step="0.01" oninput="updateTokenReceiveInfo()">
-                <p id="token-receive-info"></p>
-                <button onclick="buyTokens()">Buy</button>
-            </div>
-            <div>
-                <h3>Send Sale Tokens</h3>
-                <input type="text" id="send-recipient" placeholder="Recipient Address">
-                <input type="number" id="send-amount" placeholder="Amount to Send" step="0.01">
-                <button onclick="sendTokens()">Send Tokens</button>
-            </div>
-            <div id="tx-status"></div>
-            <div id="error-message" class="error"></div>
-        </div>
-        <div id="log-tabs" class="log-tabs" style="display: none;">
-            <div class="log-tab active" onclick="showLogTab('admin-logs')">Admin Logs</div>
-            <div class="log-tab" onclick="showLogTab('user-logs')">User Logs</div>
-        </div>
-        <div id="admin-logs" class="log-content active">
-            <table class="log-table">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Event</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-log-body"></tbody>
-            </table>
-        </div>
-        <div id="user-logs" class="log-content">
-            <table class="log-table">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Event</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody id="user-log-body"></tbody>
-            </table>
         </div>
     </div>
     <script src="https://unpkg.com/web3@1.10.4/dist/web3.min.js"></script>
     <script>
-        // **Contract Details**
-        const CONTRACT_ADDRESS = "0x65ed5aa09d34959214bdbb8b634e486081447e36"; // Replace with your contract address
+        const CONTRACT_ADDRESS = "0x65ed5aa09d34959214bdbb8b634e486081447e36";
         const GrandSaleABI = [
             {"inputs":[{"internalType":"address","name":"_token","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
             {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"approver","type":"address"},{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Approved","type":"event"},
@@ -244,7 +415,7 @@
             {"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"type":"function"}
         ];
 
-        let web3, contract, userAddress, saleTokenAddress, ownerAddress;
+        let web3, contract, userAddress, saleTokenAddress, ownerAddress, saleTokenSymbol = "Token";
         let tokenInfoMap = new Map();
         const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -260,6 +431,7 @@
                 const decimals = await tokenContract.methods.decimals().call();
                 const info = { name, symbol, decimals };
                 tokenInfoMap.set(tokenAddress, info);
+                if (tokenAddress === saleTokenAddress) saleTokenSymbol = symbol;
                 return info;
             } catch (error) {
                 console.error(`Error fetching token info for ${tokenAddress}:`, error);
@@ -269,7 +441,7 @@
 
         async function fetchAcceptedPaymentTokens() {
             if (!contract) return [];
-            const acceptedTokens = [];
+            const acceptedTokens = new Set();
             try {
                 const events = await contract.getPastEvents('PaymentTokenAdded', { fromBlock: 0, toBlock: 'latest' });
                 const removedEvents = await contract.getPastEvents('PaymentTokenRemoved', { fromBlock: 0, toBlock: 'latest' });
@@ -278,16 +450,13 @@
                     const tokenAddress = event.returnValues.paymentToken;
                     if (!removedTokens.has(tokenAddress)) {
                         const tokenInfo = await contract.methods.paymentTokens(tokenAddress).call();
-                        if (tokenInfo.isAccepted) {
-                            acceptedTokens.push(tokenAddress);
-                            await getTokenInfo(tokenAddress);
-                        }
+                        if (tokenInfo.isAccepted) acceptedTokens.add(tokenAddress);
                     }
                 }
             } catch (error) {
                 console.error('Error fetching accepted tokens:', error);
             }
-            return acceptedTokens;
+            return Array.from(acceptedTokens);
         }
 
         async function updatePaymentTokensTable() {
@@ -313,8 +482,11 @@
             }
         }
 
-        function logAdmin(eventName, details, isSuccess = true) {
-            const logBody = document.getElementById('admin-log-body');
+        function logEvent(eventName, details, isSuccess = true, isAdminEvent = false) {
+            if (!userAddress) return;
+            const isOwner = userAddress.toLowerCase() === ownerAddress?.toLowerCase();
+            if (!isOwner && isAdminEvent) return;
+            const logBody = document.getElementById('log-body');
             const row = document.createElement('tr');
             row.className = isSuccess ? 'event-success' : 'event-error';
             const detailsCell = details.includes('Tx:') 
@@ -322,31 +494,12 @@
                 : details;
             row.innerHTML = `<td>${new Date().toLocaleTimeString()}</td><td>${eventName}</td><td>${detailsCell}</td>`;
             logBody.insertBefore(row, logBody.firstChild);
-        }
-
-        function logUser(eventName, details, isSuccess = true) {
-            const logBody = document.getElementById('user-log-body');
-            const row = document.createElement('tr');
-            row.className = isSuccess ? 'event-success' : 'event-error';
-            const detailsCell = details.includes('Tx:') 
-                ? `<a href="https://amoy.polygonscan.com/tx/${details.split('Tx: ')[1]}" target="_blank">${details}</a>`
-                : details;
-            row.innerHTML = `<td>${new Date().toLocaleTimeString()}</td><td>${eventName}</td><td>${detailsCell}</td>`;
-            logBody.insertBefore(row, logBody.firstChild);
-        }
-
-        function showLogTab(tabId) {
-            document.querySelectorAll('.log-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.log-content').forEach(content => content.classList.remove('active'));
-            document.querySelector(`.log-tab[onclick="showLogTab('${tabId}')"]`).classList.add('active');
-            document.getElementById(tabId).classList.add('active');
         }
 
         function showError(section, message) {
             const errorDiv = document.querySelector(`#${section} #error-message`);
             if (errorDiv) errorDiv.textContent = message;
-            if (section === 'owner' || section === 'home') logAdmin('Error', message, false);
-            else logUser('Error', message, false);
+            logEvent('Error', message, false, section === 'owner');
         }
 
         function showTxStatus(section, message) {
@@ -355,6 +508,7 @@
         }
 
         // **Event Listeners for Buttons**
+
         document.getElementById('connect-wallet').addEventListener('click', connectWallet);
         document.getElementById('switch-account').addEventListener('click', switchAccount);
         document.getElementById('disconnect-wallet').addEventListener('click', disconnectWallet);
@@ -398,7 +552,7 @@
             document.getElementById('add-sale-token').style.display = 'none';
             document.getElementById('disconnect-wallet').style.display = 'none';
             document.getElementById('admin-nav').style.display = 'none';
-            document.getElementById('log-tabs').style.display = 'none';
+            document.getElementById('logs').style.display = 'none';
             document.getElementById('contract-address').textContent = 'Not Connected';
             document.getElementById('sale-token').textContent = 'Not Connected';
             document.getElementById('total-unsold').textContent = 'Not Connected';
@@ -413,7 +567,8 @@
             document.getElementById('reward-token').innerHTML = '<option value="">Select Payment Token</option>';
             document.getElementById('remove-payment-token-select').innerHTML = '<option value="">Select Payment Token to Remove</option>';
             document.getElementById('withdraw-token').innerHTML = '<option value="">Select Token to Withdraw</option>';
-            logAdmin('Wallet Disconnected', 'Disconnected successfully');
+            document.getElementById('log-body').innerHTML = '';
+            logEvent('Wallet Disconnected', 'Disconnected successfully');
         }
 
         async function addAmoyNetwork() {
@@ -428,7 +583,7 @@
                         blockExplorerUrls: ['https://amoy.polygonscan.com/']
                     }]
                 });
-                logAdmin('Network Added', 'Amoy network added to MetaMask');
+                logEvent('Network Added', 'Amoy network added to MetaMask', true, true);
             } catch (error) {
                 showError('home', "Failed to add Amoy network: " + error.message);
             }
@@ -450,9 +605,9 @@
                         }
                     }
                 });
-                logUser('Token Added', `Added ${tokenInfo.name} to MetaMask`);
+                logEvent('Token Added', `Added ${tokenInfo.name} to MetaMask`);
             } catch (error) {
-                showError('user', "Failed to add sale token to MetaMask: " + error.message);
+                showError('home', "Failed to add sale token to MetaMask: " + error.message);
             }
         }
 
@@ -471,16 +626,16 @@
             document.getElementById('switch-account').style.display = 'inline-block';
             document.getElementById('disconnect-wallet').style.display = 'inline-block';
             document.getElementById('contract-address').textContent = CONTRACT_ADDRESS;
+            document.getElementById('logs').style.display = 'block';
             if (userAddress.toLowerCase() === ownerAddress.toLowerCase()) {
                 document.getElementById('admin-nav').style.display = 'inline-block';
-                document.getElementById('log-tabs').style.display = 'flex';
             }
             await updateContractInfo();
             await updateAllDropdowns();
             await updateUserBalance();
             await updatePaymentTokensTable();
             setupEventListeners();
-            logAdmin('Wallet Connected', `Connected to ${userAddress}`);
+            logEvent('Wallet Connected', `Connected to ${userAddress}`);
             setInterval(updatePaymentTokensTable, 10000);
         }
 
@@ -507,7 +662,7 @@
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
-            logAdmin('Section Changed', `Switched to ${sectionId}`);
+            logEvent('Section Changed', `Switched to ${sectionId}`, true, sectionId === 'owner');
         }
 
         async function updateContractInfo() {
@@ -540,7 +695,7 @@
                 const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
                 document.getElementById('user-sale-balance').textContent = web3.utils.fromWei(balance, 'ether');
             } catch (error) {
-                showError('user', "Error updating user balance: " + error.message);
+                showError('home', "Error updating user balance: " + error.message);
             }
         }
 
@@ -568,7 +723,7 @@
                     }
                 }
             } catch (error) {
-                showError('user', "Error updating payment token list: " + error.message);
+                showError('home', "Error updating payment token list: " + error.message);
             }
         }
 
@@ -617,7 +772,7 @@
                 const tx = await contract.methods.addPaymentToken(paymentToken).send({ from: userAddress, gasPrice });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
                 await getTokenInfo(paymentToken);
-                logAdmin('Payment Token Added', `Added ${paymentToken} - Tx: ${tx.transactionHash}`);
+                logEvent('Payment Token Added', `Added ${paymentToken} - Tx: ${tx.transactionHash}`, true, true);
                 await updateAllDropdowns();
                 await updatePaymentTokensTable();
             } catch (error) {
@@ -638,7 +793,7 @@
                 if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
                 const tx = await contract.methods.removePaymentToken(paymentToken).send({ from: userAddress, gasPrice });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logAdmin('Payment Token Removed', `Removed ${paymentToken} - Tx: ${tx.transactionHash}`);
+                logEvent('Payment Token Removed', `Removed ${paymentToken} - Tx: ${tx.transactionHash}`, true, true);
                 await updateAllDropdowns();
                 await updatePaymentTokensTable();
             } catch (error) {
@@ -661,7 +816,7 @@
                 if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
                 const tx = await contract.methods.setRate(paymentToken, rate).send({ from: userAddress, gasPrice });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logAdmin('Rate Set', `Set rate for ${paymentToken} to ${rate} - Tx: ${tx.transactionHash}`);
+                logEvent('Rate Set', `Set rate for ${paymentToken} to ${rate} - Tx: ${tx.transactionHash}`, true, true);
                 await updatePaymentTokensTable();
             } catch (error) {
                 showTxStatus('owner', '');
@@ -681,7 +836,7 @@
                 if (!tokenInfo.isAccepted || tokenInfo.rate == 0) return showError('owner', 'No rate set or token not accepted');
                 const tx = await contract.methods.removeRate(paymentToken).send({ from: userAddress, gasPrice });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logAdmin('Rate Removed', `Removed rate for ${paymentToken} - Tx: ${tx.transactionHash}`);
+                logEvent('Rate Removed', `Removed rate for ${paymentToken} - Tx: ${tx.transactionHash}`, true, true);
                 await updatePaymentTokensTable();
             } catch (error) {
                 showTxStatus('owner', '');
@@ -703,7 +858,7 @@
                 if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
                 const tx = await contract.methods.setReward(paymentToken, reward).send({ from: userAddress, gasPrice });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logAdmin('Reward Set', `Set reward for ${paymentToken} to ${reward}% - Tx: ${tx.transactionHash}`);
+                logEvent('Reward Set', `Set reward for ${paymentToken} to ${reward}% - Tx: ${tx.transactionHash}`, true, true);
                 await updatePaymentTokensTable();
             } catch (error) {
                 showTxStatus('owner', '');
@@ -723,7 +878,7 @@
                 if (!tokenInfo.isAccepted || tokenInfo.reward == 0) return showError('owner', 'No reward set or token not accepted');
                 const tx = await contract.methods.removeReward(paymentToken).send({ from: userAddress, gasPrice });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logAdmin('Reward Removed', `Removed reward for ${paymentToken} - Tx: ${tx.transactionHash}`);
+                logEvent('Reward Removed', `Removed reward for ${paymentToken} - Tx: ${tx.transactionHash}`, true, true);
                 await updatePaymentTokensTable();
             } catch (error) {
                 showTxStatus('owner', '');
@@ -742,7 +897,7 @@
                 const weiAmount = web3.utils.toWei(minBuy, 'ether');
                 const tx = await contract.methods.setMinBuyToReward(weiAmount).send({ from: userAddress, gasPrice });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logAdmin('Min Buy Set', `Set minimum buy to ${minBuy} - Tx: ${tx.transactionHash}`);
+                logEvent('Min Buy Set', `Set minimum buy to ${minBuy} - Tx: ${tx.transactionHash}`, true, true);
                 await updateContractInfo();
             } catch (error) {
                 showTxStatus('owner', '');
@@ -760,7 +915,7 @@
                 if (minBuy == 0) return showError('owner', 'Minimum buy already removed');
                 const tx = await contract.methods.removeMinBuyToReward().send({ from: userAddress, gasPrice });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logAdmin('Min Buy Removed', `Removed minimum buy - Tx: ${tx.transactionHash}`);
+                logEvent('Min Buy Removed', `Removed minimum buy - Tx: ${tx.transactionHash}`, true, true);
                 await updateContractInfo();
             } catch (error) {
                 showTxStatus('owner', '');
@@ -778,7 +933,7 @@
                 const method = isPaused ? contract.methods.unpause() : contract.methods.pause();
                 const tx = await method.send({ from: userAddress, gasPrice });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logAdmin('Pause Toggled', `${isPaused ? 'Unpaused' : 'Paused'} - Tx: ${tx.transactionHash}`);
+                logEvent('Pause Toggled', `${isPaused ? 'Unpaused' : 'Paused'} - Tx: ${tx.transactionHash}`, true, true);
                 await updateContractInfo();
             } catch (error) {
                 showTxStatus('owner', '');
@@ -806,7 +961,7 @@
                 if (BigInt(balance) < BigInt(weiAmount)) return showError('owner', 'Insufficient balance in contract');
                 const tx = await contract.methods.withdraw(tokenAddress, weiAmount).send({ from: userAddress, gasPrice, value: 0 });
                 showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logAdmin('Withdraw Success', `Withdrew ${amount} from ${tokenAddress} - Tx: ${tx.transactionHash}`);
+                logEvent('Withdraw Success', `Withdrew ${amount} from ${tokenAddress} - Tx: ${tx.transactionHash}`, true, true);
                 await updateWithdrawDropdown();
             } catch (error) {
                 showTxStatus('owner', '');
@@ -817,84 +972,84 @@
         // **User Functions**
 
         async function approveToken() {
-            if (!contract) return showError('user', 'Please connect your wallet first!');
+            if (!contract) return showError('home', 'Please connect your wallet first!');
             const paymentToken = document.getElementById('approve-token-select').value;
             const amount = document.getElementById('approve-amount').value;
-            if (!paymentToken) return showError('user', 'Please select a payment token');
-            if (!amount || parseFloat(amount) <= 0) return showError('user', 'Invalid amount');
+            if (!paymentToken) return showError('home', 'Please select a payment token');
+            if (!amount || parseFloat(amount) <= 0) return showError('home', 'Invalid amount');
             try {
-                showTxStatus('user', 'Pending...');
+                showTxStatus('home', 'Pending...');
                 const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
                 const weiAmount = web3.utils.toWei(amount, 'ether');
                 const balance = await tokenContract.methods.balanceOf(userAddress).call();
-                if (BigInt(balance) < BigInt(weiAmount)) return showError('user', 'Insufficient balance');
+                if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient balance');
                 const gasPrice = await web3.eth.getGasPrice();
                 const tx = await tokenContract.methods.approve(CONTRACT_ADDRESS, weiAmount).send({ from: userAddress, gasPrice });
-                showTxStatus('user', `Success! Tx: ${tx.transactionHash}`);
+                showTxStatus('home', `Success! Tx: ${tx.transactionHash}`);
                 const tokenInfo = await getTokenInfo(paymentToken);
-                logUser('Approve Success', `Approved ${amount} of ${tokenInfo.name} - Tx: ${tx.transactionHash}`);
+                logEvent('Approve Success', `Approved ${amount} of ${tokenInfo.name} - Tx: ${tx.transactionHash}`);
             } catch (error) {
-                showTxStatus('user', '');
-                showError('user', "Approve failed: " + error.message);
+                showTxStatus('home', '');
+                showError('home', "Approve failed: " + error.message);
             }
         }
 
         async function buyTokens() {
-            if (!contract) return showError('user', 'Please connect your wallet first!');
+            if (!contract) return showError('home', 'Please connect your wallet first!');
             const paymentToken = document.getElementById('payment-token-select').value;
             const paymentAmount = document.getElementById('payment-amount').value;
-            if (!paymentToken) return showError('user', 'Please select a payment token');
-            if (!paymentAmount || parseFloat(paymentAmount) <= 0) return showError('user', 'Invalid payment amount');
+            if (!paymentToken) return showError('home', 'Please select a payment token');
+            if (!paymentAmount || parseFloat(paymentAmount) <= 0) return showError('home', 'Invalid payment amount');
             try {
-                showTxStatus('user', 'Pending...');
+                showTxStatus('home', 'Pending...');
                 const weiAmount = web3.utils.toWei(paymentAmount, 'ether');
                 const gasPrice = await web3.eth.getGasPrice();
                 let tx;
                 if (paymentToken === NATIVE_TOKEN_ADDRESS) {
                     const balance = await web3.eth.getBalance(userAddress);
-                    if (BigInt(balance) < BigInt(weiAmount)) return showError('user', 'Insufficient POL balance');
+                    if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient POL balance');
                     tx = await contract.methods.buyWithNative().send({ from: userAddress, value: weiAmount, gasPrice });
-                    logUser('Buy Success', `Bought with ${paymentAmount} POL - Tx: ${tx.transactionHash}`);
+                    logEvent('Buy Success', `Bought with ${paymentAmount} POL - Tx: ${tx.transactionHash}`);
                 } else {
                     const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
                     const balance = await tokenContract.methods.balanceOf(userAddress).call();
-                    if (BigInt(balance) < BigInt(weiAmount)) return showError('user', 'Insufficient token balance');
+                    if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient token balance');
                     const allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
-                    if (BigInt(allowance) < BigInt(weiAmount)) return showError('user', 'Insufficient allowance. Please approve first.');
+                    if (BigInt(allowance) < BigInt(weiAmount)) return showError('home', 'Insufficient allowance. Please approve first.');
                     tx = await contract.methods.buyWithToken(paymentToken, weiAmount).send({ from: userAddress, gasPrice });
                     const tokenInfo = await getTokenInfo(paymentToken);
-                    logUser('Buy Success', `Bought with ${paymentAmount} ${tokenInfo.name} - Tx: ${tx.transactionHash}`);
+                    logEvent('Buy Success', `Bought with ${paymentAmount} ${tokenInfo.name} - Tx: ${tx.transactionHash}`);
                 }
-                showTxStatus('user', `Success! Tx: ${tx.transactionHash}`);
+                showTxStatus('home', `Success! Tx: ${tx.transactionHash}`);
                 await updateContractInfo();
                 await updateUserBalance();
                 await updatePaymentTokensTable();
             } catch (error) {
-                showTxStatus('user', '');
-                showError('user', "Buy failed: " + error.message);
+                showTxStatus('home', '');
+                showError('home', "Buy failed: " + error.message);
             }
         }
 
         async function sendTokens() {
-            if (!contract) return showError('user', 'Please connect your wallet first!');
+            if (!contract) return showError('home', 'Please connect your wallet first!');
             const recipient = document.getElementById('send-recipient').value.trim();
             const amount = document.getElementById('send-amount').value;
-            if (!web3.utils.isAddress(recipient)) return showError('user', 'Invalid recipient address');
-            if (!amount || parseFloat(amount) <= 0) return showError('user', 'Invalid amount');
+            if (!web3.utils.isAddress(recipient)) return showError('home', 'Invalid recipient address');
+            if (!amount || parseFloat(amount) <= 0) return showError('home', 'Invalid amount');
             try {
-                showTxStatus('user', 'Pending...');
+                showTxStatus('home', 'Pending...');
                 const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
                 const weiAmount = web3.utils.toWei(amount, 'ether');
                 const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
-                if (BigInt(balance) < BigInt(weiAmount)) return showError('user', 'Insufficient sale token balance');
+                if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient sale token balance');
                 const gasPrice = await web3.eth.getGasPrice();
                 const tx = await saleTokenContract.methods.transfer(recipient, weiAmount).send({ from: userAddress, gasPrice });
-                showTxStatus('user', `Success! Tx: ${tx.transactionHash}`);
-                logUser('Send Success', `Sent ${amount} sale tokens to ${recipient} - Tx: ${tx.transactionHash}`);
+                showTxStatus('home', `Success! Tx: ${tx.transactionHash}`);
+                logEvent('Send Success', `Sent ${amount} ${saleTokenSymbol} to ${recipient} - Tx: ${tx.transactionHash}`);
                 await updateUserBalance();
             } catch (error) {
-                showTxStatus('user', '');
-                showError('user', "Send failed: " + error.message);
+                showTxStatus('home', '');
+                showError('home', "Send failed: " + error.message);
             }
         }
 
@@ -914,10 +1069,8 @@
                     infoDiv.textContent = 'Rate not set for this token';
                     return;
                 }
-                const weiAmount = web3.utils.toWei(paymentAmount, 'ether');
-                const tokenAmount = BigInt(weiAmount) * BigInt(tokenInfo.rate) / BigInt(1e18);
-                const tokenReceive = web3.utils.fromWei(tokenAmount.toString(), 'ether');
-                infoDiv.textContent = `You will receive approximately ${tokenReceive} sale tokens`;
+                const tokenAmount = (parseFloat(paymentAmount) * parseInt(tokenInfo.rate)).toFixed(2);
+                infoDiv.textContent = `You will receive approximately ${tokenAmount} ${saleTokenSymbol}`;
             } catch (error) {
                 infoDiv.textContent = 'Error calculating token amount';
             }
@@ -948,28 +1101,20 @@
                 'Approved'
             ];
 
-            // Fetch past events
             adminEvents.forEach(eventName => {
                 contract.getPastEvents(eventName, { fromBlock: 0, toBlock: 'latest' })
-                    .then(events => events.forEach(event => logAdmin(eventName, formatEventDetails(event), true)))
+                    .then(events => events.forEach(event => logEvent(eventName, formatEventDetails(event), true, true)))
                     .catch(error => console.error(`Error fetching past ${eventName}:`, error));
+                contract.events[eventName]({ fromBlock: 'latest' })
+                    .on('data', event => logEvent(eventName, formatEventDetails(event), true, true));
             });
 
             userEvents.forEach(eventName => {
                 contract.getPastEvents(eventName, { fromBlock: 0, toBlock: 'latest' })
-                    .then(events => events.forEach(event => logUser(eventName, formatEventDetails(event), true)))
+                    .then(events => events.forEach(event => logEvent(eventName, formatEventDetails(event), true, false)))
                     .catch(error => console.error(`Error fetching past ${eventName}:`, error));
-            });
-
-            // Listen for new events
-            adminEvents.forEach(eventName => {
                 contract.events[eventName]({ fromBlock: 'latest' })
-                    .on('data', event => logAdmin(eventName, formatEventDetails(event), true));
-            });
-
-            userEvents.forEach(eventName => {
-                contract.events[eventName]({ fromBlock: 'latest' })
-                    .on('data', event => logUser(eventName, formatEventDetails(event), true));
+                    .on('data', event => logEvent(eventName, formatEventDetails(event), true, false));
             });
         }
 
@@ -1008,7 +1153,7 @@
                     details = `${event.event} by ${returnValues.account}`;
                     break;
                 case 'TokenPurchased':
-                    details = `Buyer: ${returnValues.buyer}, Tokens: ${web3.utils.fromWei(returnValues.tokenAmount, 'ether')}, Paid: ${web3.utils.fromWei(returnValues.paymentAmount, 'ether')}`;
+                    details = `Buyer: ${returnValues.b快递uyer}, Tokens: ${web3.utils.fromWei(returnValues.tokenAmount, 'ether')}, Paid: ${web3.utils.fromWei(returnValues.paymentAmount, 'ether')}`;
                     break;
                 case 'RewardGranted':
                     details = `Buyer: ${returnValues.buyer}, Tokens: ${web3.utils.fromWei(returnValues.tokenAmount, 'ether')}, Reward: ${web3.utils.fromWei(returnValues.rewardAmount, 'ether')}`;
@@ -1030,7 +1175,7 @@
         }
 
         // **Initialization**
-        logAdmin('Page Loaded', 'DApp initialized');
+        logEvent('Page Loaded', 'DApp initialized');
     </script>
 </body>
 </html>
