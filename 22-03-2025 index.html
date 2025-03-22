@@ -45,6 +45,7 @@
             cursor: pointer;
             font-size: 1em;
             transition: background-color 0.3s, transform 0.2s;
+            width: 150px;
         }
         nav button:hover {
             background-color: #2ba844;
@@ -74,6 +75,7 @@
             border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.3s;
+            width: 150px;
         }
         .wallet-status button:hover {
             background-color: #1557b0;
@@ -187,26 +189,18 @@
             font-weight: bold;
             color: #1a73e8;
         }
-        select {
-            padding: 8px;
-            border: 1px solid #1a73e8;
-            border-radius: 6px;
-            background-color: #f9f9f9;
-            color: #333;
-            font-size: 1em;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-        select:focus {
-            border-color: #1557b0;
-            box-shadow: 0 0 5px rgba(26, 115, 232, 0.5);
-            outline: none;
-        }
-        input[type="text"], input[type="number"] {
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            max-width: 300px;
+            height: 40px;
             padding: 8px;
             margin: 5px 0;
             border: 1px solid #1a73e8;
             border-radius: 6px;
             font-size: 1em;
+        }
+        input[type="number"] {
+            padding-right: 50px; /* Space for the Max button */
         }
         button:not(nav button):not(.wallet-status button):not(.copy-btn) {
             padding: 8px 16px;
@@ -230,7 +224,8 @@
         .max-btn {
             position: absolute;
             right: 10px;
-            bottom: 10px;
+            top: 50%;
+            transform: translateY(-50%);
             padding: 2px 8px;
             background-color: #34c759;
             color: #fff;
@@ -254,6 +249,9 @@
             .wallet-status button { display: block; margin: 5px auto; }
             .container { padding: 10px; }
             .input-group { max-width: 100%; }
+            .section > div { display: flex; flex-direction: column; align-items: center; }
+            .section > div > * { margin: 5px 0; }
+            select, input[type="text"], input[type="number"], button { width: 100%; max-width: 300px; }
         }
     </style>
 </head>
@@ -536,7 +534,7 @@
                         <td>${tokenDetails.name} (${tokenDetails.symbol})</td>
                         <td>${tokenInfo.rate}</td>
                         <td>${tokenInfo.reward}</td>
-                        <td>${web3.utils.fromWei(tokenInfo.totalRaised, 'ether')}</td>
+                        <td>${parseFloat(web3.utils.fromWei(tokenInfo.totalRaised, 'ether')).toFixed(2)}</td>
                     `;
                     tbody.appendChild(row);
                 }
@@ -695,7 +693,7 @@
                         }
                     }
                 });
-                logEvent('Token Added', `Added ${tokenInfo.name} to MetaMask`);
+                logEvent('Token Added', `Added ${tokenInfo.symbol} to MetaMask`);
             } catch (error) {
                 showError('home', "Failed to add sale token to MetaMask: " + error.message);
             }
@@ -718,7 +716,7 @@
                         }
                     }
                 });
-                logEvent('Token Added', `Added ${tokenInfo.name} to MetaMask`);
+                logEvent('Token Added', `Added ${tokenInfo.symbol} to MetaMask`);
             } catch (error) {
                 showError('home', "Failed to add payment token to MetaMask: " + error.message);
             }
@@ -783,7 +781,12 @@
         }
 
         function copyToClipboard(elementId) {
-            const text = document.getElementById(elementId).textContent.replace('Copy', '').trim();
+            let text;
+            if (elementId === 'contract-address') {
+                text = CONTRACT_ADDRESS;
+            } else if (elementId === 'sale-token') {
+                text = saleTokenAddress;
+            }
             navigator.clipboard.writeText(text);
             logEvent('Copy', `Copied ${elementId === 'contract-address' ? 'Contract Address' : 'Sale Token Address'} to clipboard`);
         }
@@ -808,11 +811,11 @@
                 const totalRewarded = await contract.methods.totalRewarded().call();
                 const paused = await contract.methods.paused().call();
                 const tokenInfo = await getTokenInfo(saleTokenAddress);
-                document.getElementById('sale-token').innerHTML = `${tokenInfo.name} (${saleTokenAddress})<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button>`;
-                document.getElementById('total-unsold').textContent = web3.utils.fromWei(totalUnsold, 'ether');
-                document.getElementById('min-buy-to-reward').textContent = web3.utils.fromWei(minBuyToReward, 'ether');
-                document.getElementById('total-sold').textContent = web3.utils.fromWei(totalSold, 'ether');
-                document.getElementById('total-rewarded').textContent = web3.utils.fromWei(totalRewarded, 'ether');
+                document.getElementById('sale-token').innerHTML = `${tokenInfo.symbol} (${saleTokenAddress})<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button>`;
+                document.getElementById('total-unsold').textContent = parseFloat(web3.utils.fromWei(totalUnsold, 'ether')).toFixed(2);
+                document.getElementById('min-buy-to-reward').textContent = parseFloat(web3.utils.fromWei(minBuyToReward, 'ether')).toFixed(2);
+                document.getElementById('total-sold').textContent = parseFloat(web3.utils.fromWei(totalSold, 'ether')).toFixed(2);
+                document.getElementById('total-rewarded').textContent = parseFloat(web3.utils.fromWei(totalRewarded, 'ether')).toFixed(2);
                 document.getElementById('contract-status').textContent = paused ? 'Paused' : 'Unpaused';
             } catch (error) {
                 showError('home', "Error updating contract info: " + error.message);
@@ -824,8 +827,8 @@
             try {
                 const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
                 const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
-                document.getElementById('user-sale-balance').textContent = web3.utils.fromWei(balance, 'ether');
-                document.getElementById('send-balance').textContent = `${web3.utils.fromWei(balance, 'ether')} ${saleTokenSymbol}`;
+                document.getElementById('user-sale-balance').textContent = parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2);
+                document.getElementById('send-balance').textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${saleTokenSymbol}`;
             } catch (error) {
                 showError('home', "Error updating user balance: " + error.message);
             }
@@ -849,7 +852,7 @@
                     balance = await tokenContract.methods.balanceOf(userAddress).call();
                 }
                 const tokenInfo = await getTokenInfo(tokenAddress);
-                balanceSpan.textContent = `${web3.utils.fromWei(balance, 'ether')} ${tokenInfo.symbol}`;
+                balanceSpan.textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${tokenInfo.symbol}`;
                 maxBtn.style.display = 'inline-block';
             } catch (error) {
                 balanceSpan.textContent = '0';
@@ -875,7 +878,7 @@
                     balance = await tokenContract.methods.balanceOf(userAddress).call();
                 }
                 const tokenInfo = await getTokenInfo(tokenAddress);
-                balanceSpan.textContent = `${web3.utils.fromWei(balance, 'ether')} ${tokenInfo.symbol}`;
+                balanceSpan.textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${tokenInfo.symbol}`;
                 maxBtn.style.display = 'inline-block';
             } catch (error) {
                 balanceSpan.textContent = '0';
@@ -883,15 +886,47 @@
             }
         }
 
+        async function estimateGasForBuyWithNative() {
+            try {
+                const gasEstimate = await contract.methods.buyWithNative().estimateGas({ from: userAddress, value: web3.utils.toWei('1', 'ether') });
+                const gasPrice = await web3.eth.getGasPrice();
+                return BigInt(gasEstimate) * BigInt(gasPrice);
+            } catch (error) {
+                console.error('Error estimating gas:', error);
+                return BigInt(0);
+            }
+        }
+
+        async function setMaxBuy() {
+            const tokenAddress = document.getElementById('payment-token-select').value;
+            if (!tokenAddress || !userAddress) return;
+            try {
+                let balance;
+                if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
+                    balance = await web3.eth.getBalance(userAddress);
+                    const gasFee = await estimateGasForBuyWithNative();
+                    const doubleGasFee = gasFee * BigInt(2);
+                    if (BigInt(balance) > doubleGasFee) {
+                        balance = BigInt(balance) - doubleGasFee;
+                    } else {
+                        balance = BigInt(0);
+                    }
+                } else {
+                    const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
+                    balance = await tokenContract.methods.balanceOf(userAddress).call();
+                }
+                const tokenInfo = await getTokenInfo(tokenAddress);
+                const maxAmount = parseFloat(web3.utils.fromWei(balance.toString(), 'ether')).toFixed(2);
+                document.getElementById('payment-amount').value = maxAmount;
+                updateTokenReceiveInfo();
+            } catch (error) {
+                showError('home', "Error setting max buy amount: " + error.message);
+            }
+        }
+
         function setMaxApprove() {
             const balance = document.getElementById('approve-balance').textContent.split(' ')[0];
             document.getElementById('approve-amount').value = balance;
-        }
-
-        function setMaxBuy() {
-            const balance = document.getElementById('buy-balance').textContent.split(' ')[0];
-            document.getElementById('payment-amount').value = balance;
-            updateTokenReceiveInfo();
         }
 
         function setMaxSend() {
@@ -946,7 +981,7 @@
                         const info = await getTokenInfo(address);
                         const option = document.createElement('option');
                         option.value = address;
-                        option.textContent = `${info.name} (${info.symbol}) - Balance: ${web3.utils.fromWei(balance, 'ether')}`;
+                        option.textContent = `${info.name} (${info.symbol}) - Balance: ${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)}`;
                         select.appendChild(option);
                     }
                 }
@@ -1198,7 +1233,7 @@
                 const tx = await tokenContract.methods.approve(CONTRACT_ADDRESS, weiAmount).send({ from: userAddress, gasPrice });
                 showTxStatus('home', `Success! Tx: ${tx.transactionHash}`);
                 const tokenInfo = await getTokenInfo(paymentToken);
-                logEvent('Approve Success', `Approved ${amount} of ${tokenInfo.name}`, true, false, tx.transactionHash);
+                logEvent('Approve Success', `Approved ${amount} of ${tokenInfo.symbol}`, true, false, tx.transactionHash);
                 await updateApproveBalance();
             } catch (error) {
                 showTxStatus('home', '');
@@ -1231,7 +1266,7 @@
                     if (BigInt(allowance) < BigInt(weiAmount)) return showError('home', 'Insufficient allowance. Please approve first.');
                     tx = await contract.methods.buyWithToken(paymentToken, weiAmount).send({ from: userAddress, gasPrice });
                     const tokenInfo = await getTokenInfo(paymentToken);
-                    logEvent('Buy Success', `Bought with ${paymentAmount} ${tokenInfo.name}`, true, false, tx.transactionHash);
+                    logEvent('Buy Success', `Bought with ${paymentAmount} ${tokenInfo.symbol}`, true, false, tx.transactionHash);
                 }
                 showTxStatus('home', `Success! Tx: ${tx.transactionHash}`);
                 await updateContractInfo();
@@ -1341,49 +1376,49 @@
             switch (event.event) {
                 case 'PaymentTokenAdded':
                 case 'PaymentTokenRemoved':
-                    details = `${event.event === 'PaymentTokenAdded' ? 'Added' : 'Removed'} ${tokenInfoMap.get(returnValues.paymentToken)?.name || 'Unknown'} (${returnValues.paymentToken})`;
+                    details = `${event.event === 'PaymentTokenAdded' ? 'Added' : 'Removed'} ${tokenInfoMap.get(returnValues.paymentToken)?.symbol || 'Unknown'} (${returnValues.paymentToken})`;
                     break;
                 case 'RateSet':
-                    details = `Set rate to ${returnValues.rate} for ${tokenInfoMap.get(returnValues.paymentToken)?.name || 'Unknown'} (${returnValues.paymentToken})`;
+                    details = `Set rate to ${returnValues.rate} for ${tokenInfoMap.get(returnValues.paymentToken)?.symbol || 'Unknown'} (${returnValues.paymentToken})`;
                     break;
                 case 'RateRemoved':
-                    details = `Removed rate for ${tokenInfoMap.get(returnValues.paymentToken)?.name || 'Unknown'} (${returnValues.paymentToken})`;
+                    details = `Removed rate for ${tokenInfoMap.get(returnValues.paymentToken)?.symbol || 'Unknown'} (${returnValues.paymentToken})`;
                     break;
                 case 'RewardSet':
-                    details = `Set reward to ${returnValues.reward}% for ${tokenInfoMap.get(returnValues.paymentToken)?.name || 'Unknown'} (${returnValues.paymentToken})`;
+                    details = `Set reward to ${returnValues.reward}% for ${tokenInfoMap.get(returnValues.paymentToken)?.symbol || 'Unknown'} (${returnValues.paymentToken})`;
                     break;
                 case 'RewardRemoved':
-                    details = `Removed reward for ${tokenInfoMap.get(returnValues.paymentToken)?.name || 'Unknown'} (${returnValues.paymentToken})`;
+                    details = `Removed reward for ${tokenInfoMap.get(returnValues.paymentToken)?.symbol || 'Unknown'} (${returnValues.paymentToken})`;
                     break;
                 case 'MinBuyToRewardSet':
-                    details = `Set to ${web3.utils.fromWei(returnValues.minBuyToReward, 'ether')}`;
+                    details = `Set to ${parseFloat(web3.utils.fromWei(returnValues.minBuyToReward, 'ether')).toFixed(2)}`;
                     break;
                 case 'MinBuyToRewardRemoved':
                     details = `Removed`;
                     break;
                 case 'Withdrawn':
-                    const token = returnValues.token === NATIVE_TOKEN_ADDRESS ? { name: 'Polygon', symbol: 'POL' } : tokenInfoMap.get(returnValues.token) || { name: 'Unknown', symbol: 'UNK' };
-                    details = `Withdrew ${web3.utils.fromWei(returnValues.amount, 'ether')} ${token.symbol}`;
+                    const token = returnValues.token === NATIVE_TOKEN_ADDRESS ? { symbol: 'POL' } : tokenInfoMap.get(returnValues.token) || { symbol: 'UNK' };
+                    details = `Withdrew ${parseFloat(web3.utils.fromWei(returnValues.amount, 'ether')).toFixed(2)} ${token.symbol}`;
                     break;
                 case 'Paused':
                 case 'Unpaused':
                     details = `${event.event} by ${returnValues.account}`;
                     break;
                 case 'TokenPurchased':
-                    details = `Buyer: ${returnValues.buyer}, Tokens: ${web3.utils.fromWei(returnValues.tokenAmount, 'ether')}, Paid: ${web3.utils.fromWei(returnValues.paymentAmount, 'ether')}`;
+                    details = `Buyer: ${returnValues.buyer}, Tokens: ${parseFloat(web3.utils.fromWei(returnValues.tokenAmount, 'ether')).toFixed(2)}, Paid: ${parseFloat(web3.utils.fromWei(returnValues.paymentAmount, 'ether')).toFixed(2)}`;
                     break;
                 case 'RewardGranted':
-                    details = `Buyer: ${returnValues.buyer}, Tokens: ${web3.utils.fromWei(returnValues.tokenAmount, 'ether')}, Reward: ${web3.utils.fromWei(returnValues.rewardAmount, 'ether')}`;
+                    details = `Buyer: ${returnValues.buyer}, Tokens: ${parseFloat(web3.utils.fromWei(returnValues.tokenAmount, 'ether')).toFixed(2)}, Reward: ${parseFloat(web3.utils.fromWei(returnValues.rewardAmount, 'ether')).toFixed(2)}`;
                     break;
                 case 'NotEligible':
-                    details = `Buyer: ${returnValues.buyer}, Tokens: ${web3.utils.fromWei(returnValues.tokenAmount, 'ether')} (not eligible for reward)`;
+                    details = `Buyer: ${returnValues.buyer}, Tokens: ${parseFloat(web3.utils.fromWei(returnValues.tokenAmount, 'ether')).toFixed(2)} (not eligible for reward)`;
                     break;
                 case 'FundsSecured':
-                    details = isOwner ? `Owner: ${returnValues.owner}, Amount: ${web3.utils.fromWei(returnValues.paymentAmount, 'ether')} POL` : `Amount: ${web3.utils.fromWei(returnValues.paymentAmount, 'ether')} POL`;
+                    details = isOwner ? `Owner: ${returnValues.owner}, Amount: ${parseFloat(web3.utils.fromWei(returnValues.paymentAmount, 'ether')).toFixed(2)} POL` : `Amount: ${parseFloat(web3.utils.fromWei(returnValues.paymentAmount, 'ether')).toFixed(2)} POL`;
                     break;
                 case 'Approved':
-                    const tokenInfo = tokenInfoMap.get(returnValues.paymentToken) || { name: 'Unknown', symbol: 'UNK' };
-                    details = `Approver: ${returnValues.approver}, Token: ${tokenInfo.name} (${returnValues.paymentToken}), Amount: ${web3.utils.fromWei(returnValues.amount, 'ether')}`;
+                    const tokenInfo = tokenInfoMap.get(returnValues.paymentToken) || { symbol: 'UNK' };
+                    details = `Approver: ${returnValues.approver}, Token: ${tokenInfo.symbol} (${returnValues.paymentToken}), Amount: ${parseFloat(web3.utils.fromWei(returnValues.amount, 'ether')).toFixed(2)}`;
                     break;
                 default:
                     details = JSON.stringify(returnValues);
