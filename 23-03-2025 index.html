@@ -1369,7 +1369,7 @@
             const rv = event.returnValues;
             switch (event.event) {
                 case 'Approved': return `Approver: ${rv.approver}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}`;
-                case 'FundsSecured': return `Owner: ${rv.owner}, Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
+                case 'FundsSecured': return `Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
                 case 'MinBuyToRewardSet': return `Min Buy: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
                 case 'MinBuyToRewardRemoved': return `Min Buy Removed: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
                 case 'NotEligible': return `Buyer: ${rv.buyer}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}`;
