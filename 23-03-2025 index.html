@@ -26,7 +26,7 @@
             text-align: center;
             padding-bottom: 20px;
             border-bottom: 1px solid #e0e0e0;
-            background-color: #e0f2ff;
+            background-color: #e0f2fe;
         }
         header h1 {
             margin: 0;
@@ -58,7 +58,7 @@
         .section {
             display: none;
             padding: 20px;
-            background-color: #e0f2ff;
+            background-color: #e0f2fe;
             border-radius: 8px;
             margin-bottom: 20px;
         }
@@ -88,7 +88,7 @@
             min-width: 140px;
         }
         .wallet-status button:hover, .control-btn:hover {
-            background-color: #025986; /* Darker sky blue for hover */
+            background-color: #075985; /* Darker sky blue */
         }
         .wallet-connected {
             color: #34c759;
@@ -141,6 +141,13 @@
         .log-table th:nth-child(3), .log-table td:nth-child(3) { 
             width: 60%; 
             word-break: break-all;
+        }
+        .tx-hash {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: bottom;
         }
         .event-success { color: #28a745; }
         .event-error { color: #dc3545; }
@@ -232,7 +239,7 @@
             text-decoration: underline;
         }
         .control-group {
-            display: none; /* Changed to none for conditional display */
+            display: none;
             flex-direction: column;
             gap: 10px;
             margin: 15px 0;
@@ -241,18 +248,13 @@
             border-radius: 8px;
         }
         .control-group.active {
-            display: flex; /* Show when active */
+            display: flex;
         }
         .control-row {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             align-items: center;
-        }
-        #tx-status {
-            margin-top: 10px;
-            word-wrap: break-word;
-            max-width: 100%;
         }
         @media (max-width: 600px) {
             nav button { width: 100%; max-width: 200px; margin: 5px auto; }
@@ -594,7 +596,7 @@
             const row = document.createElement('tr');
             row.className = isSuccess ? 'event-success' : 'event-error';
             const detailsCell = txHash 
-                ? `<a href="https://amoy.polygonscan.com/tx/${txHash}" target="_blank">${details}</a>`
+                ? `<a href="https://amoy.polygonscan.com/tx/${txHash}" target="_blank" class="tx-hash">${details}</a>`
                 : details;
             const time = timestamp || (txHash ? 'Pending...' : new Date().toLocaleString());
             row.innerHTML = `<td>${time}</td><td>${eventName}</td><td>${detailsCell}</td>`;
@@ -628,7 +630,13 @@
 
         function showTxStatus(section, message) {
             const statusDiv = document.querySelector(`#${section} #tx-status`);
-            if (statusDiv) statusDiv.textContent = message;
+            if (statusDiv) {
+                statusDiv.textContent = message;
+                if (message.startsWith('Success! Tx: ')) {
+                    const txHash = message.split('Success! Tx: ')[1];
+                    statusDiv.innerHTML = `Success! Tx: <span class="tx-hash"><a href="https://amoy.polygonscan.com/tx/${txHash}" target="_blank">${txHash}</a></span>`;
+                }
+            }
         }
 
         // Event Listeners for Buttons
@@ -925,7 +933,13 @@
                     const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
                     balance = await tokenContract.methods.balanceOf(userAddress).call();
                     allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
-                    approveSection.classList.toggle('active', BigInt(balance) > BigInt(allowance));
+                    const paymentAmount = document.getElementById('payment-amount').value || '0';
+                    const weiAmount = web3.utils.toWei(paymentAmount, 'ether');
+                    if (BigInt(allowance) < BigInt(weiAmount) && paymentAmount !== '0') {
+                        approveSection.classList.add('active');
+                    } else {
+                        approveSection.classList.remove('active');
+                    }
                 }
                 const tokenInfo = await getTokenInfo(tokenAddress);
                 balanceSpan.textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${tokenInfo.symbol}`;
@@ -1304,7 +1318,10 @@
                     const balance = await tokenContract.methods.balanceOf(userAddress).call();
                     if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient token balance');
                     const allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
-                    if (BigInt(allowance) < BigInt(weiAmount)) return showError('home', 'Insufficient allowance. Please approve first.');
+                    if (BigInt(allowance) < BigInt(weiAmount)) {
+                        document.getElementById('approve-section').classList.add('active');
+                        return showError('home', 'Insufficient allowance. Please approve first.');
+                    }
                     tx = await contract.methods.buyWithToken(paymentToken, weiAmount).send({ from: userAddress, gasPrice });
                     const tokenInfo = await getTokenInfo(paymentToken);
                     logEvent('Buy Success', `Bought with ${paymentAmount} ${tokenInfo.symbol}`, true, false, tx.transactionHash);
@@ -1349,57 +1366,115 @@
             const paymentToken = document.getElementById('payment-token-select').value;
             const paymentAmount = document.getElementById('payment-amount').value;
             const infoDiv = document.getElementById('token-receive-info');
+            const approveSection = document.getElementById('approve-section');
             if (!paymentToken || !paymentAmount || parseFloat(paymentAmount) <= 0) {
                 infoDiv.textContent = '';
+                approveSection.classList.remove('active');
                 return;
             }
             try {
                 const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
                 if (!tokenInfo.isAccepted || tokenInfo.rate == 0) {
                     infoDiv.textContent = 'Rate not set for this token';
+                    approveSection.classList.remove('active');
                     return;
                 }
                 const tokenAmount = (parseFloat(paymentAmount) * parseInt(tokenInfo.rate)).toFixed(2);
                 infoDiv.textContent = `You will receive approximately ${tokenAmount} ${saleTokenSymbol}`;
+                if (paymentToken !== NATIVE_TOKEN_ADDRESS) {
+                    const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
+                    const allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
+                    const weiAmount = web3.utils.toWei(paymentAmount, 'ether');
+                    if (BigInt(allowance) < BigInt(weiAmount)) {
+                        approveSection.classList.add('active');
+                    } else {
+                        approveSection.classList.remove('active');
+                    }
+                } else {
+                    approveSection.classList.remove('active');
+                }
             } catch (error) {
                 infoDiv.textContent = 'Error calculating token amount';
+                approveSection.classList.remove('active');
+                console.error('Error updating token receive info:', error);
             }
         }
 
-        function setupEventListeners() {
-            contract.events.allEvents({ fromBlock: 'latest' }, async (error, event) => {
-                if (error) {
-                    console.error('Error on event', error);
-                    return;
-                }
-                const txHash = event.transactionHash;
-                const details = formatEventDetails(event);
-                logEvent(event.event, details, true, false, txHash);
-            });
-        }
-
+        // Event Formatting
         function formatEventDetails(event) {
-            const rv = event.returnValues;
             switch (event.event) {
-                case 'Approved': return `Approver: ${rv.approver}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}`;
-                case 'FundsSecured': return `Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`; // Removed Owner
-                case 'MinBuyToRewardSet': return `Min Buy: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
-                case 'MinBuyToRewardRemoved': return `Min Buy Removed: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
-                case 'NotEligible': return `Buyer: ${rv.buyer}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}`;
-                case 'PaymentTokenAdded': return `Payment Token: ${rv.paymentToken}`;
-                case 'PaymentTokenRemoved': return `Payment Token: ${rv.paymentToken}`;
-                case 'RateSet': return `Rate: ${rv.rate}, Payment Token: ${rv.paymentToken}`;
-                case 'RateRemoved': return `Payment Token: ${rv.paymentToken}`;
-                case 'RewardGranted': return `Buyer: ${rv.buyer}, Payment Token: ${rv.paymentToken}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Reward Amount: ${web3.utils.fromWei(rv.rewardAmount, 'ether')}`;
-                case 'RewardSet': return `Payment Token: ${rv.paymentToken}, Reward: ${rv.reward}`;
-                case 'RewardRemoved': return `Payment Token: ${rv.paymentToken}`;
-                case 'TokenPurchased': return `Buyer: ${rv.buyer}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Payment Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
-                case 'Withdrawn': return `Token: ${rv.token}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}, Owner: ${rv.owner}`;
-                case 'Paused': return `Account: ${rv.account}`;
-                case 'Unpaused': return `Account: ${rv.account}`;
-                default: return 'Unknown event';
+                case 'Approved':
+                    return `Approver: ${event.returnValues.approver}, Token: ${event.returnValues.paymentToken}, Amount: ${web3.utils.fromWei(event.returnValues.amount, 'ether')}`;
+                case 'FundsSecured':
+                    return `Owner: ${event.returnValues.owner}, Amount: ${web3.utils.fromWei(event.returnValues.paymentAmount, 'ether')}`;
+                case 'MinBuyToRewardSet':
+                    return `Min Buy: ${web3.utils.fromWei(event.returnValues.minBuyToReward, 'ether')}`;
+                case 'MinBuyToRewardRemoved':
+                    return `Min Buy Removed`;
+                case 'NotEligible':
+                    return `Buyer: ${event.returnValues.buyer}, Amount: ${web3.utils.fromWei(event.returnValues.tokenAmount, 'ether')}`;
+                case 'PaymentTokenAdded':
+                    return `Token: ${event.returnValues.paymentToken}`;
+                case 'PaymentTokenRemoved':
+                    return `Token: ${event.returnValues.paymentToken}`;
+                case 'RateSet':
+                    return `Token: ${event.returnValues.paymentToken}, Rate: ${event.returnValues.rate}`;
+                case 'RateRemoved':
+                    return `Token: ${event.returnValues.paymentToken}`;
+                case 'RewardGranted':
+                    return `Buyer: ${event.returnValues.buyer}, Token: ${event.returnValues.paymentToken}, Amount: ${web3.utils.fromWei(event.returnValues.tokenAmount, 'ether')}, Reward: ${web3.utils.fromWei(event.returnValues.rewardAmount, 'ether')}`;
+                case 'RewardSet':
+                    return `Token: ${event.returnValues.paymentToken}, Reward: ${event.returnValues.reward}%`;
+                case 'RewardRemoved':
+                    return `Token: ${event.returnValues.paymentToken}`;
+                case 'TokenPurchased':
+                    return `Buyer: ${event.returnValues.buyer}, Token Amount: ${web3.utils.fromWei(event.returnValues.tokenAmount, 'ether')}, Payment: ${web3.utils.fromWei(event.returnValues.paymentAmount, 'ether')}`;
+                case 'Withdrawn':
+                    return `Token: ${event.returnValues.token}, Amount: ${web3.utils.fromWei(event.returnValues.amount, 'ether')}, Owner: ${event.returnValues.owner}`;
+                case 'Paused':
+                case 'Unpaused':
+                    return `By: ${event.returnValues.account}`;
+                default:
+                    return JSON.stringify(event.returnValues);
             }
         }
+
+        // Real-time Event Listeners
+        function setupEventListeners() {
+            if (!contract) return;
+            contract.events.allEvents()
+                .on('data', async (event) => {
+                    const details = formatEventDetails(event);
+                    logEvent(event.event, details, true, false, event.transactionHash);
+                    await updateContractInfo();
+                    await updateUserBalance();
+                    await updatePaymentTokensTable();
+                    await updateAllDropdowns();
+                })
+                .on('error', (error) => console.error('Event listener error:', error));
+        }
+
+        // Initial Setup
+        window.addEventListener('load', async () => {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                window.ethereum.on('accountsChanged', async (accounts) => {
+                    if (accounts.length > 0 && userAddress && accounts[0] !== userAddress) {
+                        userAddress = accounts[0];
+                        await initializeAfterConnect();
+                        logEvent('Account Changed', `Switched to ${userAddress}`);
+                    } else if (accounts.length === 0) {
+                        disconnectWallet();
+                    }
+                });
+                window.ethereum.on('chainChanged', async (chainId) => {
+                    if (parseInt(chainId) !== 80002) await switchToAmoy();
+                    await initializeAfterConnect();
+                    logEvent('Network Changed', `Switched to ${chainId === '0x13882' ? 'Polygon Amoy' : 'Unknown Network'}`);
+                });
+            }
+            document.getElementById('payment-amount').addEventListener('input', updateTokenReceiveInfo);
+        });
     </script>
 </body>
 </html>
