@@ -26,12 +26,12 @@
             text-align: center;
             padding-bottom: 20px;
             border-bottom: 1px solid #e0e0e0;
-            background-color: #cce5ff;
+            background-color: #e0f2ff;
         }
         header h1 {
             margin: 0;
             font-size: 2em;
-            color: #0d3a74; /* Darkened from #1a73e8 */
+            color: #0369a1; /* Sky blue */
         }
         nav {
             margin: 20px 0;
@@ -58,7 +58,7 @@
         .section {
             display: none;
             padding: 20px;
-            background-color: #cce5ff;
+            background-color: #e0f2ff;
             border-radius: 8px;
             margin-bottom: 20px;
         }
@@ -80,7 +80,7 @@
         .wallet-status button, .control-btn {
             padding: 10px 20px;
             border: none;
-            background-color: #0d3a74; /* Darkened from #1a73e8 */
+            background-color: #0369a1; /* Sky blue */
             color: #fff;
             border-radius: 6px;
             cursor: pointer;
@@ -88,7 +88,7 @@
             min-width: 140px;
         }
         .wallet-status button:hover, .control-btn:hover {
-            background-color: #092a5a; /* Adjusted hover color */
+            background-color: #025986; /* Darker sky blue for hover */
         }
         .wallet-connected {
             color: #34c759;
@@ -110,7 +110,7 @@
             display: none;
         }
         .history h3 {
-            background-color: #0d3a74; /* Darkened from #1a73e8 */
+            background-color: #0369a1; /* Sky blue */
             color: #fff;
             padding: 10px;
             margin: 0;
@@ -140,7 +140,7 @@
         .log-table th:nth-child(2), .log-table td:nth-child(2) { width: 20%; }
         .log-table th:nth-child(3), .log-table td:nth-child(3) { 
             width: 60%; 
-            word-break: break-all; /* Prevent tx hash overflow */
+            word-break: break-all;
         }
         .event-success { color: #28a745; }
         .event-error { color: #dc3545; }
@@ -159,7 +159,7 @@
             text-align: left;
         }
         .contract-info-table th {
-            background-color: #0d3a74; /* Darkened from #1a73e8 */
+            background-color: #0369a1; /* Sky blue */
             color: #fff;
         }
         .payment-tokens-table th {
@@ -193,7 +193,7 @@
         #token-receive-info {
             margin-top: 10px;
             font-weight: bold;
-            color: #0d3a74; /* Darkened from #1a73e8 */
+            color: #0369a1; /* Sky blue */
         }
         select, input[type="text"], input[type="number"] {
             width: 100%;
@@ -201,7 +201,7 @@
             height: 40px;
             padding: 8px;
             margin: 8px 0;
-            border: 1px solid #0d3a74; /* Darkened from #1a73e8 */
+            border: 1px solid #0369a1; /* Sky blue */
             border-radius: 6px;
             font-size: 1em;
             box-sizing: border-box;
@@ -225,14 +225,14 @@
         .balance-display {
             margin: 8px 0;
             font-size: 0.9em;
-            color: #0d3a74; /* Darkened from #1a73e8 */
+            color: #0369a1; /* Sky blue */
             cursor: pointer;
         }
         .balance-display:hover {
             text-decoration: underline;
         }
         .control-group {
-            display: flex;
+            display: none; /* Changed to none for conditional display */
             flex-direction: column;
             gap: 10px;
             margin: 15px 0;
@@ -240,11 +240,19 @@
             background-color: #f9f9f9;
             border-radius: 8px;
         }
+        .control-group.active {
+            display: flex; /* Show when active */
+        }
         .control-row {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             align-items: center;
+        }
+        #tx-status {
+            margin-top: 10px;
+            word-wrap: break-word;
+            max-width: 100%;
         }
         @media (max-width: 600px) {
             nav button { width: 100%; max-width: 200px; margin: 5px auto; }
@@ -317,7 +325,7 @@
                 <h3>Your Balance</h3>
                 <p>Sale Token Balance: <span id="user-sale-balance">0</span></p>
             </div>
-            <div class="control-group">
+            <div class="control-group" id="approve-section">
                 <h3>Increase Token Allowance</h3>
                 <div class="control-row">
                     <select id="approve-token-select" onchange="updateApproveBalance()">
@@ -406,7 +414,7 @@
             </div>
             <div class="control-group">
                 <h3>Set Minimum Buy to Reward</h3>
-                <div class=" Analysiscontrol-row">
+                <div class="control-row">
                     <input type="number" id="min-buy-value" placeholder="Minimum Buy Amount" step="1">
                     <button id="set-min-buy-btn" class="control-btn" onclick="setMinBuyToReward()">Set Min Buy</button>
                 </div>
@@ -693,6 +701,7 @@
             document.getElementById('withdraw-token').innerHTML = '<option value="">Select Token to Withdraw</option>';
             document.getElementById('payment-token-to-metamask').innerHTML = '<option value="">Select Payment Token</option>';
             document.getElementById('log-body').innerHTML = '';
+            document.getElementById('approve-section').classList.remove('active');
             logEvent('Wallet Disconnected', 'Disconnected successfully');
         }
 
@@ -900,24 +909,30 @@
             const tokenAddress = document.getElementById('payment-token-select').value;
             const balanceSpan = document.getElementById('buy-balance');
             const maxBtn = document.querySelector('#payment-amount + .max-btn');
+            const approveSection = document.getElementById('approve-section');
             if (!tokenAddress || !userAddress) {
                 balanceSpan.textContent = '0';
                 maxBtn.style.display = 'none';
+                approveSection.classList.remove('active');
                 return;
             }
             try {
-                let balance;
+                let balance, allowance;
                 if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
                     balance = await web3.eth.getBalance(userAddress);
+                    approveSection.classList.remove('active');
                 } else {
                     const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
                     balance = await tokenContract.methods.balanceOf(userAddress).call();
+                    allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
+                    approveSection.classList.toggle('active', BigInt(balance) > BigInt(allowance));
                 }
                 const tokenInfo = await getTokenInfo(tokenAddress);
                 balanceSpan.textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${tokenInfo.symbol}`;
                 maxBtn.style.display = 'inline-block';
             } catch (error) {
                 balanceSpan.textContent = '0';
+                approveSection.classList.remove('active');
                 showError('home', "Error updating buy balance: " + error.message);
             }
         }
@@ -1260,6 +1275,7 @@
                 const tokenInfo = await getTokenInfo(paymentToken);
                 logEvent('Approve Success', `Approved unlimited for ${tokenInfo.symbol}`, true, false, tx.transactionHash);
                 await updateApproveBalance();
+                await updateBuyBalance();
             } catch (error) {
                 showTxStatus('home', '');
                 const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
@@ -1366,17 +1382,17 @@
             const rv = event.returnValues;
             switch (event.event) {
                 case 'Approved': return `Approver: ${rv.approver}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}`;
-                case 'FundsSecured': return `Owner: ${rv.owner}, Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
+                case 'FundsSecured': return `Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`; // Removed Owner
                 case 'MinBuyToRewardSet': return `Min Buy: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
                 case 'MinBuyToRewardRemoved': return `Min Buy Removed: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
-                case 'NotEligible': return `Buyer: ${rv.buyer}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}`;
-                case 'PaymentTokenAdded': return `Token: ${rv.paymentToken}`;
-                case 'PaymentTokenRemoved': return `Token: ${rv.paymentToken}`;
-                case 'RateSet': return `Token: ${rv.paymentToken}, Rate: ${rv.rate}`;
-                case 'RateRemoved': return `Token: ${rv.paymentToken}`;
-                case 'RewardGranted': return `Buyer: ${rv.buyer}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Reward: ${web3.utils.fromWei(rv.rewardAmount, 'ether')}`;
-                case 'RewardSet': return `Token: ${rv.paymentToken}, Reward: ${rv.reward}%`;
-                case 'RewardRemoved': return `Token: ${rv.paymentToken}`;
+                case 'NotEligible': return `Buyer: ${rv.buyer}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}`;
+                case 'PaymentTokenAdded': return `Payment Token: ${rv.paymentToken}`;
+                case 'PaymentTokenRemoved': return `Payment Token: ${rv.paymentToken}`;
+                case 'RateSet': return `Rate: ${rv.rate}, Payment Token: ${rv.paymentToken}`;
+                case 'RateRemoved': return `Payment Token: ${rv.paymentToken}`;
+                case 'RewardGranted': return `Buyer: ${rv.buyer}, Payment Token: ${rv.paymentToken}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Reward Amount: ${web3.utils.fromWei(rv.rewardAmount, 'ether')}`;
+                case 'RewardSet': return `Payment Token: ${rv.paymentToken}, Reward: ${rv.reward}`;
+                case 'RewardRemoved': return `Payment Token: ${rv.paymentToken}`;
                 case 'TokenPurchased': return `Buyer: ${rv.buyer}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Payment Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
                 case 'Withdrawn': return `Token: ${rv.token}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}, Owner: ${rv.owner}`;
                 case 'Paused': return `Account: ${rv.account}`;
