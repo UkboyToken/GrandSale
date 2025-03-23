@@ -11,6 +11,7 @@
             padding: 0;
             background-color: #f0f2f5;
             color: #333;
+            height: 100%;
         }
         .container {
             width: 90%;
@@ -25,6 +26,7 @@
             text-align: center;
             padding-bottom: 20px;
             border-bottom: 1px solid #e0e0e0;
+            background-color: #cce5ff;
         }
         header h1 {
             margin: 0;
@@ -34,7 +36,7 @@
         nav {
             margin: 20px 0;
             display: flex;
-            flex-wrap: wrap; /* Added */
+            flex-wrap: wrap;
             justify-content: center;
             gap: 10px;
         }
@@ -56,6 +58,9 @@
         .section {
             display: none;
             padding: 20px;
+            background-color: #cce5ff;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
         .section.active {
             display: block;
@@ -89,6 +94,7 @@
             color: #34c759;
             font-weight: bold;
             margin: 10px 0;
+            cursor: pointer;
         }
         .wallet-instructions {
             margin-top: 15px;
@@ -99,11 +105,11 @@
             border: 1px solid #ffeeba;
             width: 100%;
         }
-        .logs {
+        .history {
             margin-top: 20px;
             display: none;
         }
-        .logs h3 {
+        .history h3 {
             background-color: #1a73e8;
             color: #fff;
             padding: 10px;
@@ -282,12 +288,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>Contract Address</td><td id="contract-address">Not Connected<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button></td></tr>
-                    <tr><td>Sale Token</td><td id="sale-token">Not Connected<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button></td></tr>
-                    <tr><td>Total Unsold</td><td id="total-unsold">Not Connected</td></tr>
-                    <tr><td>Minimum Buy to Reward</td><td id="min-buy-to-reward">Not Connected</td></tr>
-                    <tr><td>Total Sold</td><td id="total-sold">Not Connected</td></tr>
-                    <tr><td>Total Rewarded</td><td id="total-rewarded">Not Connected</td></tr>
+                    <tr><td>Contract Address</td><td id="contract-address">Connect First<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button></td></tr>
+                    <tr><td>Sale Token</td><td id="sale-token">Connect First<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button></td></tr>
+                    <tr><td>Total Unsold</td><td id="total-unsold">Connect First</td></tr>
+                    <tr><td>Minimum Buy to Reward</td><td id="min-buy-to-reward">Connect First</td></tr>
+                    <tr><td>Total Sold</td><td id="total-sold">Connect First</td></tr>
+                    <tr><td>Total Rewarded</td><td id="total-rewarded">Connect First</td></tr>
                 </tbody>
             </table>
             <div>
@@ -429,8 +435,8 @@
             <div id="tx-status"></div>
             <div id="error-message" class="error"></div>
         </div>
-        <div id="logs" class="logs">
-            <h3>Logs</h3>
+        <div id="history" class="history">
+            <h3>History</h3>
             <div class="log-content">
                 <table class="log-table">
                     <thead>
@@ -577,9 +583,6 @@
         }
 
         function logEvent(eventName, details, isSuccess = true, isAdminEvent = false, txHash = null) {
-            if (!userAddress) return;
-            const isOwner = userAddress.toLowerCase() === ownerAddress?.toLowerCase();
-            if (!isOwner && isAdminEvent) return;
             const logBody = document.getElementById('log-body');
             const row = document.createElement('tr');
             row.className = isSuccess ? 'event-success' : 'event-error';
@@ -660,13 +663,13 @@
             document.getElementById('disconnect-wallet-btn').style.display = 'none';
             document.getElementById('home-btn').style.display = 'none';
             document.getElementById('admin-btn').style.display = 'none';
-            document.getElementById('logs').style.display = 'none';
-            document.getElementById('contract-address').textContent = 'Not Connected';
-            document.getElementById('sale-token').textContent = 'Not Connected';
-            document.getElementById('total-unsold').textContent = 'Not Connected';
-            document.getElementById('min-buy-to-reward').textContent = 'Not Connected';
-            document.getElementById('total-sold').textContent = 'Not Connected';
-            document.getElementById('total-rewarded').textContent = 'Not Connected';
+            document.getElementById('history').style.display = 'none';
+            document.getElementById('contract-address').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'contract-address\')">Copy</button>';
+            document.getElementById('sale-token').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'sale-token\')">Copy</button>';
+            document.getElementById('total-unsold').textContent = 'Connect First';
+            document.getElementById('min-buy-to-reward').textContent = 'Connect First';
+            document.getElementById('total-sold').textContent = 'Connect First';
+            document.getElementById('total-rewarded').textContent = 'Connect First';
             document.getElementById('payment-tokens-body').innerHTML = '';
             document.getElementById('contract-status').textContent = 'Unknown';
             document.getElementById('approve-token-select').innerHTML = '<option value="">Select Payment Token</option>';
@@ -676,7 +679,7 @@
             document.getElementById('remove-payment-token-select').innerHTML = '<option value="">Select Payment Token to Remove</option>';
             document.getElementById('withdraw-token').innerHTML = '<option value="">Select Token to Withdraw</option>';
             document.getElementById('payment-token-to-metamask').innerHTML = '<option value="">Select Payment Token</option>';
-            document.getElementById('log-body').innerHTML = ''; // Clear all events
+            document.getElementById('log-body').innerHTML = '';
             logEvent('Wallet Disconnected', 'Disconnected successfully');
         }
 
@@ -761,23 +764,23 @@
             contract = new web3.eth.Contract(GrandSaleABI, CONTRACT_ADDRESS);
             ownerAddress = await contract.methods.owner().call();
             document.getElementById('wallet-info').style.display = 'block';
-            document.getElementById('connected-address').innerHTML = `Connected Address: ${userAddress}`;
+            document.getElementById('connected-address').innerHTML = `Connected Address: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+            document.getElementById('connected-address').onclick = () => { navigator.clipboard.writeText(userAddress); logEvent('Copy', 'Wallet address copied to clipboard'); };
             document.getElementById('connected-network').innerHTML = `Connected Network: ${networkName}`;
             document.getElementById('connect-wallet-btn').style.display = 'none';
             document.getElementById('switch-account-btn').style.display = 'inline-block';
             document.getElementById('disconnect-wallet-btn').style.display = 'inline-block';
             document.getElementById('add-payment-token-btn').style.display = 'inline-block';
-            document.getElementById('contract-address').innerHTML = `${CONTRACT_ADDRESS}<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button>`; // Updated
-            document.getElementById('logs').style.display = 'block';
-            if (userAddress.toLowerCase() === ownerAddress.toLowerCase()) {
-                document.getElementById('home-btn').style.display = 'inline-block';
-                document.getElementById('admin-btn').style.display = 'inline-block';
-            }
+            document.getElementById('contract-address').innerHTML = `${CONTRACT_ADDRESS}<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button>`;
+            document.getElementById('history').style.display = 'block';
+            const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
+            document.getElementById('home-btn').style.display = isOwner && document.getElementById('owner').classList.contains('active') ? 'inline-block' : 'none';
+            document.getElementById('admin-btn').style.display = isOwner && document.getElementById('home').classList.contains('active') ? 'inline-block' : 'none';
             await updateContractInfo();
             await updateAllDropdowns();
             await updatePaymentTokensTable();
             await updateUserBalance();
-            setupEventListeners(); // Repopulate all events
+            setupEventListeners();
             logEvent('Wallet Connected', `Connected to ${userAddress}`);
         }
 
@@ -814,6 +817,9 @@
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
+            const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
+            document.getElementById('home-btn').style.display = isOwner && sectionId === 'owner' ? 'inline-block' : 'none';
+            document.getElementById('admin-btn').style.display = isOwner && sectionId === 'home' ? 'inline-block' : 'none';
             logEvent('Section Changed', `Switched to ${sectionId}`, true, sectionId === 'owner');
         }
 
@@ -845,7 +851,7 @@
             try {
                 const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
                 const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
-                document.getElementById('user-sale-balance').textContent = parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2);
+                document.getElementById('user-sale-balance').textContent = `${saleTokenSymbol} ${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)}`;
                 document.getElementById('send-balance').textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${saleTokenSymbol}`;
             } catch (error) {
                 showError('home', "Error updating user balance: " + error.message);
@@ -1341,77 +1347,38 @@
             }
         }
 
-        // Event Listeners Setup
         function setupEventListeners() {
-            const adminEvents = [
-                'PaymentTokenAdded',
-                'PaymentTokenRemoved',
-                'RateSet',
-                'RateRemoved',
-                'RewardSet',
-                'RewardRemoved',
-                'MinBuyToRewardSet',
-                'MinBuyToRewardRemoved',
-                'Withdrawn',
-                'Paused',
-                QuoteUnquote
-            ];
-
-            const userEvents = [
-                'TokenPurchased',
-                'RewardGranted',
-                'NotEligible',
-                'FundsSecured',
-                'Approved'
-            ];
-
-            adminEvents.forEach(eventName => {
-                contract.getPastEvents(eventName, { fromBlock: 0, toBlock: 'latest' })
-                    .then(events => events.forEach(event => logEvent(eventName, formatEventDetails(event), true, true, event.transactionHash)))
-                    .catch(error => console.error(`Error fetching ${eventName} events:`, error));
-            });
-
-            userEvents.forEach(eventName => {
-                contract.getPastEvents(eventName, { fromBlock: 0, toBlock: 'latest' })
-                    .then(events => events.forEach(event => logEvent(eventName, formatEventDetails(event), true, false, event.transactionHash)))
-                    .catch(error => console.error(`Error fetching ${eventName} events:`, error));
+            contract.events.allEvents({ fromBlock: 'latest' }, async (error, event) => {
+                if (error) {
+                    console.error('Error on event', error);
+                    return;
+                }
+                const txHash = event.transactionHash;
+                const details = formatEventDetails(event);
+                logEvent(event.event, details, true, false, txHash);
             });
         }
 
         function formatEventDetails(event) {
-            const values = event.returnValues;
+            const rv = event.returnValues;
             switch (event.event) {
-                case 'PaymentTokenAdded':
-                case 'PaymentTokenRemoved':
-                    return `Token: ${values.paymentToken}`;
-                case 'RateSet':
-                    return `Token: ${values.paymentToken}, Rate: ${values.rate}`;
-                case 'RateRemoved':
-                    return `Token: ${values.paymentToken}`;
-                case 'RewardSet':
-                    return `Token: ${values.paymentToken}, Reward: ${values.reward}%`;
-                case 'RewardRemoved':
-                    return `Token: ${values.paymentToken}`;
-                case 'MinBuyToRewardSet':
-                case 'MinBuyToRewardRemoved':
-                    return `Amount: ${web3.utils.fromWei(values.minBuyToReward, 'ether')}`;
-                case 'Withdrawn':
-                    return `Token: ${values.token}, Amount: ${web3.utils.fromWei(values.amount, 'ether')}, Owner: ${values.owner}`;
-                case 'Paused':
-                case 'Unpaused':
-                    return `Account: ${values.account}`;
-                case 'TokenPurchased':
-                    return `Buyer: ${values.buyer}, Tokens: ${web3.utils.fromWei(values.tokenAmount, 'ether')}, Paid: ${web3.utils.fromWei(values.paymentAmount, 'ether')}`;
-                case 'RewardGranted':
-                    return `Buyer: ${values.buyer}, Token: ${values.paymentToken}, Tokens: ${web3.utils.fromWei(values.tokenAmount, 'ether')}, Reward: ${web3.utils.fromWei(values.rewardAmount, 'ether')}`;
-                case 'NotEligible':
-                    return `Buyer: ${values.buyer}, Tokens: ${web3.utils.fromWei(values.tokenAmount, 'ether')}`;
-                case 'FundsSecured':
-                    return `Owner: ${values.owner}, Amount: ${web3.utils.fromWei(values.paymentAmount, 'ether')}`;
-                case 'Approved':
-                    return `Approver: ${values.approver}, Token: ${values.paymentToken}, Amount: ${web3.utils.fromWei(values.amount, 'ether')}`;
-                default:
-                    return JSON.stringify(values);
+                case 'Approved': return `Approver: ${rv.approver}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}`;
+                case 'FundsSecured': return `Owner: ${rv.owner}, Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
+                case 'MinBuyToRewardSet': return `Min Buy: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
+                case 'MinBuyToRewardRemoved': return `Min Buy Removed: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
+                case 'NotEligible': return `Buyer: ${rv.buyer}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}`;
+                case 'PaymentTokenAdded': return `Token: ${rv.paymentToken}`;
+                case 'PaymentTokenRemoved': return `Token: ${rv.paymentToken}`;
+                case 'RateSet': return `Token: ${rv.paymentToken}, Rate: ${rv.rate}`;
+                case 'RateRemoved': return `Token: ${rv.paymentToken}`;
+                case 'RewardGranted': return `Buyer: ${rv.buyer}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Reward: ${web3.utils.fromWei(rv.rewardAmount, 'ether')}`;
+                case 'RewardSet': return `Token: ${rv.paymentToken}, Reward: ${rv.reward}%`;
+                case 'RewardRemoved': return `Token: ${rv.paymentToken}`;
+                case 'TokenPurchased': return `Buyer: ${rv.buyer}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Payment Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
+                case 'Withdrawn': return `Token: ${rv.token}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}, Owner: ${rv.owner}`;
+                case 'Paused': return `Account: ${rv.account}`;
+                case 'Unpaused': return `Account: ${rv.account}`;
+                default: return 'Unknown event';
             }
         }
     </script>
