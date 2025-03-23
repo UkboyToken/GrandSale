@@ -31,7 +31,7 @@
         header h1 {
             margin: 0;
             font-size: 2em;
-            color: #1a73e8;
+            color: #0d3a74; /* Darkened from #1a73e8 */
         }
         nav {
             margin: 20px 0;
@@ -80,7 +80,7 @@
         .wallet-status button, .control-btn {
             padding: 10px 20px;
             border: none;
-            background-color: #1a73e8;
+            background-color: #0d3a74; /* Darkened from #1a73e8 */
             color: #fff;
             border-radius: 6px;
             cursor: pointer;
@@ -88,7 +88,7 @@
             min-width: 140px;
         }
         .wallet-status button:hover, .control-btn:hover {
-            background-color: #1557b0;
+            background-color: #092a5a; /* Adjusted hover color */
         }
         .wallet-connected {
             color: #34c759;
@@ -110,7 +110,7 @@
             display: none;
         }
         .history h3 {
-            background-color: #1a73e8;
+            background-color: #0d3a74; /* Darkened from #1a73e8 */
             color: #fff;
             padding: 10px;
             margin: 0;
@@ -138,7 +138,10 @@
         }
         .log-table th:nth-child(1), .log-table td:nth-child(1) { width: 20%; }
         .log-table th:nth-child(2), .log-table td:nth-child(2) { width: 20%; }
-        .log-table th:nth-child(3), .log-table td:nth-child(3) { width: 60%; }
+        .log-table th:nth-child(3), .log-table td:nth-child(3) { 
+            width: 60%; 
+            word-break: break-all; /* Prevent tx hash overflow */
+        }
         .event-success { color: #28a745; }
         .event-error { color: #dc3545; }
         .contract-info-table, .payment-tokens-table {
@@ -156,7 +159,7 @@
             text-align: left;
         }
         .contract-info-table th {
-            background-color: #1a73e8;
+            background-color: #0d3a74; /* Darkened from #1a73e8 */
             color: #fff;
         }
         .payment-tokens-table th {
@@ -190,7 +193,7 @@
         #token-receive-info {
             margin-top: 10px;
             font-weight: bold;
-            color: #1a73e8;
+            color: #0d3a74; /* Darkened from #1a73e8 */
         }
         select, input[type="text"], input[type="number"] {
             width: 100%;
@@ -198,7 +201,7 @@
             height: 40px;
             padding: 8px;
             margin: 8px 0;
-            border: 1px solid #1a73e8;
+            border: 1px solid #0d3a74; /* Darkened from #1a73e8 */
             border-radius: 6px;
             font-size: 1em;
             box-sizing: border-box;
@@ -222,7 +225,7 @@
         .balance-display {
             margin: 8px 0;
             font-size: 0.9em;
-            color: #1a73e8;
+            color: #0d3a74; /* Darkened from #1a73e8 */
             cursor: pointer;
         }
         .balance-display:hover {
@@ -320,14 +323,10 @@
                     <select id="approve-token-select" onchange="updateApproveBalance()">
                         <option value="">Select Payment Token</option>
                     </select>
-                    <span id="approve-balance" class="balance-display" onclick="setMaxApprove()">0</span>
+                    <span id="approve-balance" class="balance-display">0</span>
                 </div>
                 <div class="control-row">
-                    <div class="input-group">
-                        <input type="number" id="approve-amount" placeholder="Amount to Approve" step="0.01">
-                        <button class="max-btn" onclick="setMaxApprove()" style="display: none;">Max</button>
-                    </div>
-                    <button id="approve-btn" class="control-btn" onclick="approveToken()">Approve</button>
+                    <button id="approve-btn" class="control-btn" onclick="approveToken()">Approve Unlimited</button>
                 </div>
             </div>
             <div class="control-group">
@@ -341,7 +340,7 @@
                 <div class="control-row">
                     <div class="input-group">
                         <input type="number" id="payment-amount" placeholder="Amount" step="0.01" oninput="updateTokenReceiveInfo()">
-                        <button class="max-btn" onclick="setMaxBuy()" style="display: none;">Max</button>
+                        <button class="max-btn" onclick="setMaxBuy()">Max</button>
                     </div>
                     <button id="buy-btn" class="control-btn" onclick="buyTokens()">Buy</button>
                 </div>
@@ -407,7 +406,7 @@
             </div>
             <div class="control-group">
                 <h3>Set Minimum Buy to Reward</h3>
-                <div class="control-row">
+                <div class=" Analysiscontrol-row">
                     <input type="number" id="min-buy-value" placeholder="Minimum Buy Amount" step="1">
                     <button id="set-min-buy-btn" class="control-btn" onclick="setMinBuyToReward()">Set Min Buy</button>
                 </div>
@@ -582,20 +581,34 @@
             }
         }
 
-        function logEvent(eventName, details, isSuccess = true, isAdminEvent = false, txHash = null) {
+        function logEvent(eventName, details, isSuccess = true, isAdminEvent = false, txHash = null, timestamp = null) {
             const logBody = document.getElementById('log-body');
             const row = document.createElement('tr');
             row.className = isSuccess ? 'event-success' : 'event-error';
             const detailsCell = txHash 
                 ? `<a href="https://amoy.polygonscan.com/tx/${txHash}" target="_blank">${details}</a>`
                 : details;
-            const time = txHash ? 'Pending...' : new Date().toLocaleString();
+            const time = timestamp || (txHash ? 'Pending...' : new Date().toLocaleString());
             row.innerHTML = `<td>${time}</td><td>${eventName}</td><td>${detailsCell}</td>`;
             logBody.insertBefore(row, logBody.firstChild);
-            if (txHash) {
-                getTransactionTimestamp(txHash).then(timestamp => {
-                    row.cells[0].textContent = timestamp;
+            if (txHash && !timestamp) {
+                getTransactionTimestamp(txHash).then(ts => {
+                    row.cells[0].textContent = ts;
                 });
+            }
+        }
+
+        async function fetchAndLogHistoricalEvents() {
+            try {
+                const events = await contract.getPastEvents('allEvents', { fromBlock: 0, toBlock: 'latest' });
+                for (const event of events) {
+                    const txHash = event.transactionHash;
+                    const details = formatEventDetails(event);
+                    const timestamp = await getTransactionTimestamp(txHash);
+                    logEvent(event.event, details, true, false, txHash, timestamp);
+                }
+            } catch (error) {
+                console.error('Error fetching historical events:', error);
             }
         }
 
@@ -780,6 +793,8 @@
             await updateAllDropdowns();
             await updatePaymentTokensTable();
             await updateUserBalance();
+            document.getElementById('log-body').innerHTML = '';
+            await fetchAndLogHistoricalEvents();
             setupEventListeners();
             logEvent('Wallet Connected', `Connected to ${userAddress}`);
         }
@@ -861,10 +876,8 @@
         async function updateApproveBalance() {
             const tokenAddress = document.getElementById('approve-token-select').value;
             const balanceSpan = document.getElementById('approve-balance');
-            const maxBtn = document.querySelector('#approve-amount + .max-btn');
             if (!tokenAddress || !userAddress) {
                 balanceSpan.textContent = '0';
-                maxBtn.style.display = 'none';
                 return;
             }
             try {
@@ -877,7 +890,6 @@
                 }
                 const tokenInfo = await getTokenInfo(tokenAddress);
                 balanceSpan.textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${tokenInfo.symbol}`;
-                maxBtn.style.display = 'inline-block';
             } catch (error) {
                 balanceSpan.textContent = '0';
                 showError('home', "Error updating approve balance: " + error.message);
@@ -946,11 +958,6 @@
             } catch (error) {
                 showError('home', "Error setting max buy amount: " + error.message);
             }
-        }
-
-        function setMaxApprove() {
-            const balance = document.getElementById('approve-balance').textContent.split(' ')[0];
-            document.getElementById('approve-amount').value = balance;
         }
 
         function setMaxSend() {
@@ -1242,20 +1249,16 @@
         async function approveToken() {
             if (!contract) return showError('home', 'Please connect your wallet first!');
             const paymentToken = document.getElementById('approve-token-select').value;
-            const amount = document.getElementById('approve-amount').value;
             if (!paymentToken) return showError('home', 'Please select a payment token');
-            if (!amount || parseFloat(amount) <= 0) return showError('home', 'Invalid amount');
             try {
                 showTxStatus('home', 'Pending...');
                 const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
-                const weiAmount = web3.utils.toWei(amount, 'ether');
-                const balance = await tokenContract.methods.balanceOf(userAddress).call();
-                if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient balance');
+                const maxAmount = '115792089237316195423570985008687907853269984665640564039457584007913129639935'; // 2^256 - 1
                 const gasPrice = await web3.eth.getGasPrice();
-                const tx = await tokenContract.methods.approve(CONTRACT_ADDRESS, weiAmount).send({ from: userAddress, gasPrice });
+                const tx = await tokenContract.methods.approve(CONTRACT_ADDRESS, maxAmount).send({ from: userAddress, gasPrice });
                 showTxStatus('home', `Success! Tx: ${tx.transactionHash}`);
                 const tokenInfo = await getTokenInfo(paymentToken);
-                logEvent('Approve Success', `Approved ${amount} of ${tokenInfo.symbol}`, true, false, tx.transactionHash);
+                logEvent('Approve Success', `Approved unlimited for ${tokenInfo.symbol}`, true, false, tx.transactionHash);
                 await updateApproveBalance();
             } catch (error) {
                 showTxStatus('home', '');
