@@ -866,7 +866,7 @@
             try {
                 const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
                 const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
-                document.getElementById('user-sale-balance').textContent = `${saleTokenSymbol} ${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)}`;
+                document.getElementById('user-sale-balance').textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${saleTokenSymbol}`;
                 document.getElementById('send-balance').textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${saleTokenSymbol}`;
             } catch (error) {
                 showError('home', "Error updating user balance: " + error.message);
