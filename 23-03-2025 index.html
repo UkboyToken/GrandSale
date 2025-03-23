@@ -1,1392 +1,1415 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grand Sale</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f2f5;
-            color: #333;
-            height: 100%;
-        }
-        .container {
-            width: 90%;
-            max-width: 1000px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        header {
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e0e0e0;
-            background-color: #cce5ff;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 2em;
-            color: #0d3a74; /* Darkened from #1a73e8 */
-        }
-        nav {
-            margin: 20px 0;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-        }
-        nav button {
-            padding: 12px 24px;
-            border: none;
-            background-color: #34c759;
-            color: #fff;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s, transform 0.2s;
-            min-width: 120px;
-        }
-        nav button:hover {
-            background-color: #2ba844;
-            transform: scale(1.05);
-        }
-        .section {
-            display: none;
-            padding: 20px;
-            background-color: #cce5ff;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .section.active {
-            display: block;
-        }
-        .wallet-status {
-            text-align: center;
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-        }
-        .wallet-status button, .control-btn {
-            padding: 10px 20px;
-            border: none;
-            background-color: #0d3a74; /* Darkened from #1a73e8 */
-            color: #fff;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            min-width: 140px;
-        }
-        .wallet-status button:hover, .control-btn:hover {
-            background-color: #092a5a; /* Adjusted hover color */
-        }
-        .wallet-connected {
-            color: #34c759;
-            font-weight: bold;
-            margin: 10px 0;
-            cursor: pointer;
-        }
-        .wallet-instructions {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #fff3cd;
-            color: #856404;
-            border-radius: 6px;
-            border: 1px solid #ffeeba;
-            width: 100%;
-        }
-        .history {
-            margin-top: 20px;
-            display: none;
-        }
-        .history h3 {
-            background-color: #0d3a74; /* Darkened from #1a73e8 */
-            color: #fff;
-            padding: 10px;
-            margin: 0;
-            border-radius: 6px 6px 0 0;
-            text-align: center;
-        }
-        .log-content {
-            padding: 10px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 0 0 6px 6px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .log-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-        .log-table th, .log-table td {
-            padding: 8px;
-            border: 1px solid #ddd;
-            text-align: left;
-            word-wrap: break-word;
-        }
-        .log-table th:nth-child(1), .log-table td:nth-child(1) { width: 20%; }
-        .log-table th:nth-child(2), .log-table td:nth-child(2) { width: 20%; }
-        .log-table th:nth-child(3), .log-table td:nth-child(3) { 
-            width: 60%; 
-            word-break: break-all; /* Prevent tx hash overflow */
-        }
-        .event-success { color: #28a745; }
-        .event-error { color: #dc3545; }
-        .contract-info-table, .payment-tokens-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        .contract-info-table th, .contract-info-table td,
-        .payment-tokens-table th, .payment-tokens-table td {
-            padding: 12px;
-            border: 1px solid #e0e0e0;
-            text-align: left;
-        }
-        .contract-info-table th {
-            background-color: #0d3a74; /* Darkened from #1a73e8 */
-            color: #fff;
-        }
-        .payment-tokens-table th {
-            background-color: #34c759;
-            color: #fff;
-        }
-        .contract-info-table td, .payment-tokens-table td {
-            position: relative;
-        }
-        .copy-btn {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 4px 8px;
-            background-color: #34c759;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .payment-tokens-table th:nth-child(1), .payment-tokens-table td:nth-child(1) { width: 40%; }
-        .payment-tokens-table th:nth-child(2), .payment-tokens-table td:nth-child(2) { width: 20%; }
-        .payment-tokens-table th:nth-child(3), .payment-tokens-table td:nth-child(3) { width: 15%; }
-        .payment-tokens-table th:nth-child(4), .payment-tokens-table td:nth-child(4) { width: 25%; }
-        .error {
-            color: #dc3545;
-            margin-top: 10px;
-            word-wrap: break-word;
-        }
-        #token-receive-info {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #0d3a74; /* Darkened from #1a73e8 */
-        }
-        select, input[type="text"], input[type="number"] {
-            width: 100%;
-            max-width: 280px;
-            height: 40px;
-            padding: 8px;
-            margin: 8px 0;
-            border: 1px solid #0d3a74; /* Darkened from #1a73e8 */
-            border-radius: 6px;
-            font-size: 1em;
-            box-sizing: border-box;
-        }
-        .input-group {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .max-btn {
-            padding: 6px 12px;
-            background-color: #34c759;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        .balance-display {
-            margin: 8px 0;
-            font-size: 0.9em;
-            color: #0d3a74; /* Darkened from #1a73e8 */
-            cursor: pointer;
-        }
-        .balance-display:hover {
-            text-decoration: underline;
-        }
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 15px 0;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-        }
-        .control-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
-        @media (max-width: 600px) {
-            nav button { width: 100%; max-width: 200px; margin: 5px auto; }
-            .wallet-status button, .control-btn { width: 100%; max-width: 200px; }
-            .control-row { flex-direction: column; align-items: stretch; }
-            select, input[type="text"], input[type="number"] { max-width: 100%; }
-            .container { padding: 10px; }
-        }
-    </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Grand Sale</title>
+ <style>
+ body {
+ font-family: 'Segoe UI', Arial, sans-serif;
+ margin: 0;
+ padding: 0;
+ background-color: #f0f2f5;
+ color: #333;
+ height: 100%;
+ }
+ .container {
+ width: 90%;
+ max-width: 1000px;
+ margin: 20px auto;
+ padding: 20px;
+ background-color: #fff;
+ border-radius: 10px;
+ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+ }
+ header {
+ text-align: center;
+ padding-bottom: 20px;
+ border-bottom: 1px solid #e0e0e0;
+ background-color: #e0f7fa; /* Changed to light sky blue */
+ }
+ header h1 {
+ margin: 0;
+ font-size: 2em;
+ color: #4682B4; /* Changed to steel blue for readability */
+ }
+ nav {
+ margin: 20px 0;
+ display: flex;
+ flex-wrap: wrap;
+ justify-content: center;
+ gap: 10px;
+ }
+ nav button {
+ padding: 12px 24px;
+ border: none;
+ background-color: #34c759;
+ color: #fff;
+ border-radius: 8px;
+ cursor: pointer;
+ font-size: 1em;
+ transition: background-color 0.3s, transform 0.2s;
+ min-width: 120px;
+ }
+ nav button:hover {
+ background-color: #2ba844;
+ transform: scale(1.05);
+ }
+ .section {
+ display: none;
+ padding: 20px;
+ background-color: #e0f7fa; /* Changed to light sky blue */
+ border-radius: 8px;
+ margin-bottom: 20px;
+ }
+ .section.active {
+ display: block;
+ }
+ .wallet-status {
+ text-align: center;
+ margin: 20px 0;
+ padding: 15px;
+ background-color: #f9f9f9;
+ border-radius: 8px;
+ box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+ display: flex;
+ flex-wrap: wrap;
+ justify-content: center;
+ gap: 10px;
+ }
+ .wallet-status button, .control-btn {
+ padding: 10px 20px;
+ border: none;
+ background-color: #87CEEB; /* Changed to sky blue */
+ color: #fff;
+ border-radius: 6px;
+ cursor: pointer;
+ transition: background-color 0.3s;
+ min-width: 140px;
+ }
+ .wallet-status button:hover, .control-btn:hover {
+ background-color: #6CBEDE; /* Slightly darker sky blue for hover */
+ }
+ .wallet-connected {
+ color: #34c759;
+ font-weight: bold;
+ margin: 10px 0;
+ cursor: pointer;
+ }
+ .wallet-instructions {
+ margin-top: 15px;
+ padding: 10px;
+ background-color: #fff3cd;
+ color: #856404;
+ border-radius: 6px;
+ border: 1px solid #ffeeba;
+ width: 100%;
+ }
+ .history {
+ margin-top: 20px;
+ display: none;
+ }
+ .history h3 {
+ background-color: #87CEEB; /* Changed to sky blue */
+ color: #fff;
+ padding: 10px;
+ margin: 0;
+ border-radius: 6px 6px 0 0;
+ text-align: center;
+ }
+ .log-content {
+ padding: 10px;
+ background-color: #f9f9f9;
+ border: 1px solid #ddd;
+ border-radius: 0 0 6px 6px;
+ max-height: 300px;
+ overflow-y: auto;
+ }
+ .log-table {
+ width: 100%;
+ border-collapse: collapse;
+ table-layout: fixed;
+ }
+ .log-table th, .log-table td {
+ padding: 8px;
+ border: 1px solid #ddd;
+ text-align: left;
+ word-wrap: break-word;
+ }
+ .log-table th:nth-child(1), .log-table td:nth-child(1) { width: 20%; }
+ .log-table th:nth-child(2), .log-table td:nth-child(2) { width: 20%; }
+ .log-table th:nth-child(3), .log-table td:nth-child(3) { 
+ width: 60%; 
+ word-break: break-all; /* Prevent tx hash overflow */
+ }
+ .event-success { color: #28a745; }
+ .event-error { color: #dc3545; }
+ .contract-info-table, .payment-tokens-table {
+ width: 100%;
+ border-collapse: collapse;
+ margin-top: 20px;
+ background-color: #fff;
+ border-radius: 8px;
+ box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+ }
+ .contract-info-table th, .contract-info-table td,
+ .payment-tokens-table th, .payment-tokens-table td {
+ padding: 12px;
+ border: 1px solid #e0e0e0;
+ text-align: left;
+ }
+ .contract-info-table th {
+ background-color: #87CEEB; /* Changed to sky blue */
+ color: #fff;
+ }
+ .payment-tokens-table th {
+ background-color: #34c759;
+ color: #fff;
+ }
+ .contract-info-table td, .payment-tokens-table td {
+ position: relative;
+ }
+ .copy-btn {
+ position: absolute;
+ right: 10px;
+ top: 50%;
+ transform: translateY(-50%);
+ padding: 4px 8px;
+ background-color: #34c759;
+ color: #fff;
+ border: none;
+ border-radius: 4px;
+ cursor: pointer;
+ }
+ .payment-tokens-table th:nth-child(1), .payment-tokens-table td:nth-child(1) { width: 40%; }
+ .payment-tokens-table th:nth-child(2), .payment-tokens-table td:nth-child(2) { width: 20%; }
+ .payment-tokens-table th:nth-child(3), .payment-tokens-table td:nth-child(3) { width: 15%; }
+ .payment-tokens-table th:nth-child(4), .payment-tokens-table td:nth-child(4) { width: 25%; }
+ .error {
+ color: #dc3545;
+ margin-top: 10px;
+ word-wrap: break-word;
+ }
+ #token-receive-info {
+ margin-top: 10px;
+ font-weight: bold;
+ color: #4682B4; /* Changed to steel blue for readability */
+ }
+ select, input[type="text"], input[type="number"] {
+ width: 100%;
+ max-width: 280px;
+ height: 40px;
+ padding: 8px;
+ margin: 8px 0;
+ border: 1px solid #87CEEB; /* Changed to sky blue */
+ border-radius: 6px;
+ font-size: 1em;
+ box-sizing: border-box;
+ }
+ .input-group {
+ position: relative;
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ flex-wrap: wrap;
+ }
+ .max-btn {
+ padding: 6px 12px;
+ background-color: #34c759;
+ color: #fff;
+ border: none;
+ border-radius: 4px;
+ cursor: pointer;
+ font-size: 0.9em;
+ }
+ .balance-display {
+ margin: 8px 0;
+ font-size: 0.9em;
+ color: #4682B4; /* Changed to steel blue for readability */
+ cursor: pointer;
+ }
+ .balance-display:hover {
+ text-decoration: underline;
+ }
+ .control-group {
+ display: flex;
+ flex-direction: column;
+ gap: 10px;
+ margin: 15px 0;
+ padding: 15px;
+ background-color: #f9f9f9;
+ border-radius: 8px;
+ }
+ #approve-section {
+ display: none; /* Hidden by default */
+ }
+ #approve-section.active {
+ display: flex; /* Show when active */
+ }
+ .control-row {
+ display: flex;
+ flex-wrap: wrap;
+ gap: 10px;
+ align-items: center;
+ }
+ @media (max-width: 600px) {
+ nav button { width: 100%; max-width: 200px; margin: 5px auto; }
+ .wallet-status button, .control-btn { width: 100%; max-width: 200px; }
+ .control-row { flex-direction: column; align-items: stretch; }
+ select, input[type="text"], input[type="number"] { max-width: 100%; }
+ .container { padding: 10px; }
+ }
+ </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Grand Sale</h1>
-            <div class="wallet-status" id="wallet-status">
-                <button id="connect-wallet-btn" class="control-btn">Connect Wallet</button>
-                <button id="switch-account-btn" class="control-btn" style="display: none;">Change Wallet</button>
-                <button id="add-amoy-btn" class="control-btn">Add Amoy Network</button>
-                <button id="add-sale-token-btn" class="control-btn" style="display: none;">Add Sale Token</button>
-                <button id="add-payment-token-btn" class="control-btn" style="display: none;">Add Payment Token</button>
-                <select id="payment-token-to-metamask" style="display: none;">
-                    <option value="">Select Payment Token</option>
-                </select>
-                <button id="refresh-btn" class="control-btn">Refresh</button>
-                <div id="wallet-info" style="display: none; width: 100%;">
-                    <p id="connected-address" class="wallet-connected"></p>
-                    <p id="connected-network"></p>
-                    <button id="disconnect-wallet-btn" class="control-btn">Disconnect</button>
-                </div>
-                <div id="wallet-instructions" class="wallet-instructions" style="display: none;"></div>
-            </div>
-        </header>
-        <nav id="navigation">
-            <button id="home-btn" onclick="showSection('home')" style="display: none;">Home</button>
-            <button id="admin-btn" onclick="showSection('owner')" style="display: none;">Admin</button>
-        </nav>
-        <div id="home" class="section active">
-            <h2>Grand Sale</h2>
-            <table class="contract-info-table">
-                <thead>
-                    <tr>
-                        <th>Detail</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>Contract Address</td><td id="contract-address">Connect First<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button></td></tr>
-                    <tr><td>Sale Token</td><td id="sale-token">Connect First<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button></td></tr>
-                    <tr><td>Total Unsold</td><td id="total-unsold">Connect First</td></tr>
-                    <tr><td>Minimum Buy to Reward</td><td id="min-buy-to-reward">Connect First</td></tr>
-                    <tr><td>Total Sold</td><td id="total-sold">Connect First</td></tr>
-                    <tr><td>Total Rewarded</td><td id="total-rewarded">Connect First</td></tr>
-                </tbody>
-            </table>
-            <div>
-                <h3>Accepted Payment Tokens</h3>
-                <table class="payment-tokens-table" id="payment-tokens-table">
-                    <thead>
-                        <tr>
-                            <th>Token</th>
-                            <th>Rate</th>
-                            <th>Reward (%)</th>
-                            <th>Total Raised</th>
-                        </tr>
-                    </thead>
-                    <tbody id="payment-tokens-body"></tbody>
-                </table>
-            </div>
-            <div class="control-group">
-                <h3>Your Balance</h3>
-                <p>Sale Token Balance: <span id="user-sale-balance">0</span></p>
-            </div>
+ <div class="container">
+ <header>
+ <h1>Grand Sale</h1>
+ <div class="wallet-status" id="wallet-status">
+ <button id="connect-wallet-btn" class="control-btn">Connect Wallet</button>
+ <button id="switch-account-btn" class="control-btn" style="display: none;">Change Wallet</button>
+ <button id="add-amoy-btn" class="control-btn">Add Amoy Network</button>
+ <button id="add-sale-token-btn" class="control-btn" style="display: none;">Add Sale Token</button>
+ <button id="add-payment-token-btn" class="control-btn" style="display: none;">Add Payment Token</button>
+ <select id="payment-token-to-metamask" style="display: none;">
+ <option value="">Select Payment Token</option>
+ </select>
+ <button id="refresh-btn" class="control-btn">Refresh</button>
+ <div id="wallet-info" style="display: none; width: 100%;">
+ <p id="connected-address" class="wallet-connected"></p>
+ <p id="connected-network"></p>
+ <button id="disconnect-wallet-btn" class="control-btn">Disconnect</button>
+ </div>
+ <div id="wallet-instructions" class="wallet-instructions" style="display: none;"></div>
+ </div>
+ </header>
+ <nav id="navigation">
+ <button id="home-btn" onclick="showSection('home')" style="display: none;">Home</button>
+ <button id="admin-btn" onclick="showSection('owner')" style="display: none;">Admin</button>
+ </nav>
+ <div id="home" class="section active">
+ <h2>Grand Sale</h2>
+ <table class="contract-info-table">
+ <thead>
+ <tr>
+ <th>Detail</th>
+ <th>Value</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr><td>Contract Address</td><td id="contract-address">Connect First<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button></td></tr>
+ <tr><td>Sale Token</td><td id="sale-token">Connect First<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button></td></tr>
+ <tr><td>Total Unsold</td><td id="total-unsold">Connect First</td></tr>
+ <tr><td>Minimum Buy to Reward</td><td id="min-buy-to-reward">Connect First</td></tr>
+ <tr><td>Total Sold</td><td id="total-sold">Connect First</td></tr>
+ <tr><td>Total Rewarded</td><td id="total-rewarded">Connect First</td></tr>
+ </tbody>
+ </table>
+ <div>
+ <h3>Accepted Payment Tokens</h3>
+ <table class="payment-tokens-table" id="payment-tokens-table">
+ <thead>
+ <tr>
+ <th>Token</th>
+ <th>Rate</th>
+ <th>Reward (%)</th>
+ <th>Total Raised</th>
+ </tr>
+ </thead>
+ <tbody id="payment-tokens-body"></tbody>
+ </table>
+ </div>
+ <div class="control-group">
+ <h3>Your Balance</h3>
+ <p>Sale Token Balance: <span id="user-sale-balance">0</span></p>
+ </div>
 
-            <div class="control-group">
-                <h3>Buy Tokens</h3>
-                <div class="control-row">
-                    <select id="payment-token-select" onchange="updateBuyBalance()">
-                        <option value="">Select Payment Token</option>
-                    </select>
-                    <span id="buy-balance" class="balance-display" onclick="setMaxBuy()">0</span>
-                </div>
-                <div class="control-row">
-                    <div class="input-group">
-                        <input type="number" id="payment-amount" placeholder="Amount" step="0.01" oninput="updateTokenReceiveInfo()">
-                        <button class="max-btn" onclick="setMaxBuy()">Max</button>
-                    </div>
-                    <button id="buy-btn" class="control-btn" onclick="buyTokens()">Buy</button>
-                </div>
-                <p id="token-receive-info"></p>
-            </div>
+ <div class="control-group">
+ <h3>Buy Tokens</h3>
+ <div class="control-row">
+ <select id="payment-token-select" onchange="updateBuyBalance()">
+ <option value="">Select Payment Token</option>
+ </select>
+ <span id="buy-balance" class="balance-display" onclick="setMaxBuy()">0</span>
+ </div>
+ <div class="control-row">
+ <div class="input-group">
+ <input type="number" id="payment-amount" placeholder="Amount" step="0.01" oninput="updateTokenReceiveInfo()">
+ <button class="max-btn" onclick="setMaxBuy()">Max</button>
+ </div>
+ <button id="buy-btn" class="control-btn" onclick="buyTokens()">Buy</button>
+ </div>
+ <p id="token-receive-info"></p>
+ </div>
 
-            <div class="control-group">
-                <h3>Increase Token Allowance</h3>
-                <div class="control-row">
-                    <select id="approve-token-select" onchange="updateApproveBalance()">
-                        <option value="">Select Payment Token</option>
-                    </select>
-                    <span id="approve-balance" class="balance-display">0</span>
-                </div>
-                <div class="control-row">
-                    <button id="approve-btn" class="control-btn" onclick="approveToken()">Approve</button>
-                </div>
-            </div>
-            
-            <div class="control-group">
-                <h3>Send Sale Tokens</h3>
-                <div class="control-row">
-                    <input type="text" id="send-recipient" placeholder="Recipient Address">
-                    <span id="send-balance" class="balance-display" onclick="setMaxSend()">0</span>
-                </div>
-                <div class="control-row">
-                    <div class="input-group">
-                        <input type="number" id="send-amount" placeholder="Amount to Send" step="0.01">
-                        <button class="max-btn" onclick="setMaxSend()">Max</button>
-                    </div>
-                    <button id="send-btn" class="control-btn" onclick="sendTokens()">Send Tokens</button>
-                </div>
-            </div>
-            <div id="tx-status"></div>
-            <div id="error-message" class="error"></div>
-        </div>
-        <div id="owner" class="section">
-            <h2>Admin</h2>
-            <div class="control-group">
-                <h3>Manage Payment Tokens</h3>
-                <div class="control-row">
-                    <input type="text" id="payment-token-address" placeholder="Payment Token Address">
-                    <button id="add-payment-btn" class="control-btn" onclick="addPaymentToken()">Add Payment Token</button>
-                </div>
-                <div class="control-row">
-                    <select id="remove-payment-token-select">
-                        <option value="">Select Payment Token to Remove</option>
-                    </select>
-                    <button id="remove-payment-btn" class="control-btn" onclick="removePaymentToken()">Remove Payment Token</button>
-                </div>
-            </div>
-            <div class="control-group">
-                <h3>Set Rate</h3>
-                <div class="control-row">
-                    <select id="rate-token">
-                        <option value="">Select Payment Token</option>
-                    </select>
-                    <input type="number" id="rate-value" placeholder="Rate" step="1">
-                </div>
-                <div class="control-row">
-                    <button id="set-rate-btn" class="control-btn" onclick="setRate()">Set Rate</button>
-                    <button id="remove-rate-btn" class="control-btn" onclick="removeRate()">Remove Rate</button>
-                </div>
-            </div>
-            <div class="control-group">
-                <h3>Set Reward</h3>
-                <div class="control-row">
-                    <select id="reward-token">
-                        <option value="">Select Payment Token</option>
-                    </select>
-                    <input type="number" id="reward-value" placeholder="Reward Percentage (1-100)" step="1">
-                </div>
-                <div class="control-row">
-                    <button id="set-reward-btn" class="control-btn" onclick="setReward()">Set Reward</button>
-                    <button id="remove-reward-btn" class="control-btn" onclick="removeReward()">Remove Reward</button>
-                </div>
-            </div>
-            <div class="control-group">
-                <h3>Set Minimum Buy to Reward</h3>
-                <div class=" Analysiscontrol-row">
-                    <input type="number" id="min-buy-value" placeholder="Minimum Buy Amount" step="1">
-                    <button id="set-min-buy-btn" class="control-btn" onclick="setMinBuyToReward()">Set Min Buy</button>
-                </div>
-                <div class="control-row">
-                    <button id="remove-min-buy-btn" class="control-btn" onclick="removeMinBuyToReward()">Remove Min Buy</button>
-                </div>
-            </div>
-            <div class="control-group">
-                <h3>Contract Status</h3>
-                <p>Status: <span id="contract-status">Unknown</span></p>
-                <button id="toggle-pause-btn" class="control-btn" onclick="togglePause()">Toggle Pause</button>
-            </div>
-            <div class="control-group">
-                <h3>Withdraw</h3>
-                <div class="control-row">
-                    <select id="withdraw-token">
-                        <option value="">Select Token to Withdraw</option>
-                    </select>
-                    <input type="number" id="withdraw-amount" placeholder="Amount" step="0.01">
-                </div>
-                <div class="control-row">
-                    <button id="withdraw-btn" class="control-btn" onclick="withdraw()">Withdraw</button>
-                </div>
-            </div>
-            <div id="tx-status"></div>
-            <div id="error-message" class="error"></div>
-        </div>
-        <div id="history" class="history">
-            <h3>History</h3>
-            <div class="log-content">
-                <table class="log-table">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Event</th>
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-                    <tbody id="log-body"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <script src="https://unpkg.com/web3@1.10.4/dist/web3.min.js"></script>
-    <script>
-        const CONTRACT_ADDRESS = "0x65ed5aa09d34959214bdbb8b634e486081447e36";
-        const GrandSaleABI = [
-            {"inputs":[{"internalType":"address","name":"_token","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"approver","type":"address"},{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Approved","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"uint256","name":"paymentAmount","type":"uint256"}],"name":"FundsSecured","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"minBuyToReward","type":"uint256"}],"name":"MinBuyToRewardRemoved","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"minBuyToReward","type":"uint256"}],"name":"MinBuyToRewardSet","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenAmount","type":"uint256"}],"name":"NotEligible","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"}],"name":"PaymentTokenAdded","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"}],"name":"PaymentTokenRemoved","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"rate","type":"uint256"},{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"}],"name":"RateSet","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"}],"name":"RateRemoved","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"rewardAmount","type":"uint256"}],"name":"RewardGranted","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"reward","type":"uint256"}],"name":"RewardSet","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"}],"name":"RewardRemoved","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"paymentAmount","type":"uint256"}],"name":"TokenPurchased","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"address","name":"owner","type":"address"}],"name":"Withdrawn","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"Paused","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"Unpaused","type":"event"},
-            {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"addPaymentToken","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"},{"internalType":"uint256","name":"paymentAmount","type":"uint256"}],"name":"buyWithToken","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"buyWithNative","outputs":[],"stateMutability":"payable","type":"function"},
-            {"inputs":[],"name":"minBuyToReward","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"paymentTokens","outputs":[{"internalType":"bool","name":"isAccepted","type":"bool"},{"internalType":"uint256","name":"rate","type":"uint256"},{"internalType":"uint256","name":"reward","type":"uint256"},{"internalType":"uint256","name":"totalRaised","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"removeMinBuyToReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"removePaymentToken","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"removeRate","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"removeReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"saleToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"_minBuyToReward","type":"uint256"}],"name":"setMinBuyToReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"},{"internalType":"uint256","name":"rate","type":"uint256"}],"name":"setRate","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"},{"internalType":"uint256","name":"reward","type":"uint256"}],"name":"setReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"token","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"totalRewarded","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"totalSold","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"_tokenAddress","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"payable","type":"function"},
-            {"inputs":[],"name":"pause","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"unpause","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-            {"stateMutability":"payable","type":"receive"}
-        ];
-        const ERC20ABI = [
-            {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
-            {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
-            {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"},
-            {"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"type":"function"},
-            {"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"},
-            {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},
-            {"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"type":"function"}
-        ];
+ <div class="control-group" id="approve-section">
+ <h3>Increase Token Allowance</h3>
+ <div class="control-row">
+ <select id="approve-token-select" onchange="updateApproveBalance()">
+ <option value="">Select Payment Token</option>
+ </select>
+ <span id="approve-balance" class="balance-display">0</span>
+ </div>
+ <div class="control-row">
+ <button id="approve-btn" class="control-btn" onclick="approveToken()">Approve</button>
+ </div>
+ </div>
+ 
+ <div class="control-group">
+ <h3>Send Sale Tokens</h3>
+ <div class="control-row">
+ <input type="text" id="send-recipient" placeholder="Recipient Address">
+ <span id="send-balance" class="balance-display" onclick="setMaxSend()">0</span>
+ </div>
+ <div class="control-row">
+ <div class="input-group">
+ <input type="number" id="send-amount" placeholder="Amount to Send" step="0.01">
+ <button class="max-btn" onclick="setMaxSend()">Max</button>
+ </div>
+ <button id="send-btn" class="control-btn" onclick="sendTokens()">Send Tokens</button>
+ </div>
+ </div>
+ <div id="tx-status"></div>
+ <div id="error-message" class="error"></div>
+ </div>
+ <div id="owner" class="section">
+ <h2>Admin</h2>
+ <div class="control-group">
+ <h3>Manage Payment Tokens</h3>
+ <div class="control-row">
+ <input type="text" id="payment-token-address" placeholder="Payment Token Address">
+ <button id="add-payment-btn" class="control-btn" onclick="addPaymentToken()">Add Payment Token</button>
+ </div>
+ <div class="control-row">
+ <select id="remove-payment-token-select">
+ <option value="">Select Payment Token to Remove</option>
+ </select>
+ <button id="remove-payment-btn" class="control-btn" onclick="removePaymentToken()">Remove Payment Token</button>
+ </div>
+ </div>
+ <div class="control-group">
+ <h3>Set Rate</h3>
+ <div class="control-row">
+ <select id="rate-token">
+ <option value="">Select Payment Token</option>
+ </select>
+ <input type="number" id="rate-value" placeholder="Rate" step="1">
+ </div>
+ <div class="control-row">
+ <button id="set-rate-btn" class="control-btn" onclick="setRate()">Set Rate</button>
+ <button id="remove-rate-btn" class="control-btn" onclick="removeRate()">Remove Rate</button>
+ </div>
+ </div>
+ <div class="control-group">
+ <h3>Set Reward</h3>
+ <div class="control-row">
+ <select id="reward-token">
+ <option value="">Select Payment Token</option>
+ </select>
+ <input type="number" id="reward-value" placeholder="Reward Percentage (1-100)" step="1">
+ </div>
+ <div class="control-row">
+ <button id="set-reward-btn" class="control-btn" onclick="setReward()">Set Reward</button>
+ <button id="remove-reward-btn" class="control-btn" onclick="removeReward()">Remove Reward</button>
+ </div>
+ </div>
+ <div class="control-group">
+ <h3>Set Minimum Buy to Reward</h3>
+ <div class="control-row">
+ <input type="number" id="min-buy-value" placeholder="Minimum Buy Amount" step="1">
+ <button id="set-min-buy-btn" class="control-btn" onclick="setMinBuyToReward()">Set Min Buy</button>
+ </div>
+ <div class="control-row">
+ <button id="remove-min-buy-btn" class="control-btn" onclick="removeMinBuyToReward()">Remove Min Buy</button>
+ </div>
+ </div>
+ <div class="control-group">
+ <h3>Contract Status</h3>
+ <p>Status: <span id="contract-status">Unknown</span></p>
+ <button id="toggle-pause-btn" class="control-btn" onclick="togglePause()">Toggle Pause</button>
+ </div>
+ <div class="control-group">
+ <h3>Withdraw</h3>
+ <div class="control-row">
+ <select id="withdraw-token">
+ <option value="">Select Token to Withdraw</option>
+ </select>
+ <input type="number" id="withdraw-amount" placeholder="Amount" step="0.01">
+ </div>
+ <div class="control-row">
+ <button id="withdraw-btn" class="control-btn" onclick="withdraw()">Withdraw</button>
+ </div>
+ </div>
+ <div id="tx-status"></div>
+ <div id="error-message" class="error"></div>
+ </div>
+ <div id="history" class="history">
+ <h3>History</h3>
+ <div class="log-content">
+ <table class="log-table">
+ <thead>
+ <tr>
+ <th>Time</th>
+ <th>Event</th>
+ <th>Details</th>
+ </tr>
+ </thead>
+ <tbody id="log-body"></tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+ <script src="https://unpkg.com/web3@1.10.4/dist/web3.min.js"></script>
+ <script>
+ const CONTRACT_ADDRESS = "0x65ed5aa09d34959214bdbb8b634e486081447e36";
+ const GrandSaleABI = [
+ {"inputs":[{"internalType":"address","name":"_token","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"approver","type":"address"},{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Approved","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"uint256","name":"paymentAmount","type":"uint256"}],"name":"FundsSecured","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"minBuyToReward","type":"uint256"}],"name":"MinBuyToRewardRemoved","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"minBuyToReward","type":"uint256"}],"name":"MinBuyToRewardSet","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenAmount","type":"uint256"}],"name":"NotEligible","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"}],"name":"PaymentTokenAdded","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"}],"name":"PaymentTokenRemoved","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"rate","type":"uint256"},{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"}],"name":"RateSet","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"}],"name":"RateRemoved","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"rewardAmount","type":"uint256"}],"name":"RewardGranted","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"reward","type":"uint256"}],"name":"RewardSet","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"}],"name":"RewardRemoved","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"paymentAmount","type":"uint256"}],"name":"TokenPurchased","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"address","name":"owner","type":"address"}],"name":"Withdrawn","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"Paused","type":"event"},
+ {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"Unpaused","type":"event"},
+ {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"addPaymentToken","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"},{"internalType":"uint256","name":"paymentAmount","type":"uint256"}],"name":"buyWithToken","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[],"name":"buyWithNative","outputs":[],"stateMutability":"payable","type":"function"},
+ {"inputs":[],"name":"minBuyToReward","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+ {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+ {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"paymentTokens","outputs":[{"internalType":"bool","name":"isAccepted","type":"bool"},{"internalType":"uint256","name":"rate","type":"uint256"},{"internalType":"uint256","name":"reward","type":"uint256"},{"internalType":"uint256","name":"totalRaised","type":"uint256"}],"stateMutability":"view","type":"function"},
+ {"inputs":[],"name":"removeMinBuyToReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"removePaymentToken","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"removeRate","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"removeReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[],"name":"saleToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+ {"inputs":[{"internalType":"uint256","name":"_minBuyToReward","type":"uint256"}],"name":"setMinBuyToReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"},{"internalType":"uint256","name":"rate","type":"uint256"}],"name":"setRate","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[{"internalType":"address","name":"paymentToken","type":"address"},{"internalType":"uint256","name":"reward","type":"uint256"}],"name":"setReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[],"name":"token","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+ {"inputs":[],"name":"totalRewarded","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+ {"inputs":[],"name":"totalSold","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+ {"inputs":[{"internalType":"address","name":"_tokenAddress","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"payable","type":"function"},
+ {"inputs":[],"name":"pause","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[],"name":"unpause","outputs":[],"stateMutability":"nonpayable","type":"function"},
+ {"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+ {"stateMutability":"payable","type":"receive"}
+ ];
+ const ERC20ABI = [
+ {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
+ {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
+ {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"},
+ {"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"type":"function"},
+ {"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"},
+ {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},
+ {"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"type":"function"}
+ ];
 
-        let web3, contract, userAddress, saleTokenAddress, ownerAddress, saleTokenSymbol = "Token";
-        let tokenInfoMap = new Map();
-        const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
+ let web3, contract, userAddress, saleTokenAddress, ownerAddress, saleTokenSymbol = "Token";
+ let tokenInfoMap = new Map();
+ const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-        // Helper Functions
-        async function getTokenInfo(tokenAddress) {
-            if (tokenAddress === NATIVE_TOKEN_ADDRESS) return { name: "Polygon", symbol: "POL", decimals: 18 };
-            if (tokenInfoMap.has(tokenAddress)) return tokenInfoMap.get(tokenAddress);
-            try {
-                const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
-                const name = await tokenContract.methods.name().call();
-                const symbol = await tokenContract.methods.symbol().call();
-                const decimals = await tokenContract.methods.decimals().call();
-                const info = { name, symbol, decimals };
-                tokenInfoMap.set(tokenAddress, info);
-                if (tokenAddress === saleTokenAddress) saleTokenSymbol = symbol;
-                return info;
-            } catch (error) {
-                console.error(`Error fetching token info for ${tokenAddress}:`, error);
-                return { name: "Unknown", symbol: "UNK", decimals: 18 };
-            }
-        }
+ // Helper Functions
+ async function getTokenInfo(tokenAddress) {
+ if (tokenAddress === NATIVE_TOKEN_ADDRESS) return { name: "Polygon", symbol: "POL", decimals: 18 };
+ if (tokenInfoMap.has(tokenAddress)) return tokenInfoMap.get(tokenAddress);
+ try {
+ const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
+ const name = await tokenContract.methods.name().call();
+ const symbol = await tokenContract.methods.symbol().call();
+ const decimals = await tokenContract.methods.decimals().call();
+ const info = { name, symbol, decimals };
+ tokenInfoMap.set(tokenAddress, info);
+ if (tokenAddress === saleTokenAddress) saleTokenSymbol = symbol;
+ return info;
+ } catch (error) {
+ console.error(`Error fetching token info for ${tokenAddress}:`, error);
+ return { name: "Unknown", symbol: "UNK", decimals: 18 };
+ }
+ }
 
-        async function fetchAcceptedPaymentTokens() {
-            if (!contract) return [];
-            const acceptedTokens = new Set();
-            try {
-                const events = await contract.getPastEvents('PaymentTokenAdded', { fromBlock: 0, toBlock: 'latest' });
-                const removedEvents = await contract.getPastEvents('PaymentTokenRemoved', { fromBlock: 0, toBlock: 'latest' });
-                const removedTokens = new Set(removedEvents.map(e => e.returnValues.paymentToken));
-                for (const event of events) {
-                    const tokenAddress = event.returnValues.paymentToken;
-                    if (!removedTokens.has(tokenAddress)) {
-                        const tokenInfo = await contract.methods.paymentTokens(tokenAddress).call();
-                        if (tokenInfo.isAccepted) acceptedTokens.add(tokenAddress);
-                    }
+ async function fetchAcceptedPaymentTokens() {
+ if (!contract) return [];
+ const acceptedTokens = new Set();
+ try {
+ const events = await contract.getPastEvents('PaymentTokenAdded', { fromBlock: 0, toBlock: 'latest' });
+ const removedEvents = await contract.getPastEvents('PaymentTokenRemoved', { fromBlock: 0, toBlock: 'latest' });
+ const removedTokens = new Set(removedEvents.map(e => e.returnValues.paymentToken));
+ for (const event of events) {
+ const tokenAddress = event.returnValues.paymentToken;
+ if (!removedTokens.has(tokenAddress)) {
+ const tokenInfo = await contract.methods.paymentTokens(tokenAddress).call();
+ if (tokenInfo.isAccepted) acceptedTokens.add(tokenAddress);
+ }
+ }
+ } catch (error) {
+ console.error('Error fetching accepted tokens:', error);
+ }
+ return Array.from(acceptedTokens);
+ }
+
+ async function updatePaymentTokensTable() {
+ if (!contract) return;
+ try {
+ const acceptedTokens = await fetchAcceptedPaymentTokens();
+ const tbody = document.getElementById('payment-tokens-body');
+ tbody.innerHTML = '';
+ for (const tokenAddress of acceptedTokens) {
+ const tokenInfo = await contract.methods.paymentTokens(tokenAddress).call();
+ const tokenDetails = await getTokenInfo(tokenAddress);
+ const row = document.createElement('tr');
+ row.innerHTML = `
+ <td>${tokenDetails.name} (${tokenDetails.symbol})</td>
+ <td>${tokenInfo.rate}</td>
+ <td>${tokenInfo.reward}</td>
+ <td>${parseFloat(web3.utils.fromWei(tokenInfo.totalRaised, 'ether')).toFixed(2)}</td>
+ `;
+ tbody.appendChild(row);
+ }
+ } catch (error) {
+ showError('home', "Error updating payment tokens table: " + error.message);
+ }
+ }
+
+ async function getTransactionTimestamp(txHash) {
+ try {
+ const receipt = await web3.eth.getTransactionReceipt(txHash);
+ const block = await web3.eth.getBlock(receipt.blockNumber);
+ return new Date(block.timestamp * 1000).toLocaleString();
+ } catch (error) {
+ console.error(`Error fetching timestamp for tx ${txHash}:`, error);
+ return new Date().toLocaleString();
+ }
+ }
+
+ function logEvent(eventName, details, isSuccess = true, isAdminEvent = false, txHash = null, timestamp = null) {
+ const logBody = document.getElementById('log-body');
+ const row = document.createElement('tr');
+ row.className = isSuccess ? 'event-success' : 'event-error';
+ const detailsCell = txHash 
+ ? `<a href="https://amoy.polygonscan.com/tx/${txHash}" target="_blank">${details}</a>`
+ : details;
+ const time = timestamp || (txHash ? 'Pending...' : new Date().toLocaleString());
+ row.innerHTML = `<td>${time}</td><td>${eventName}</td><td>${detailsCell}</td>`;
+ logBody.insertBefore(row, logBody.firstChild);
+ if (txHash && !timestamp) {
+ getTransactionTimestamp(txHash).then(ts => {
+ row.cells[0].textContent = ts;
+ });
+ }
+ }
+
+ async function fetchAndLogHistoricalEvents() {
+ try {
+ const events = await contract.getPastEvents('allEvents', { fromBlock: 0, toBlock: 'latest' });
+ for (const event of events) {
+ const txHash = event.transactionHash;
+ const details = formatEventDetails(event);
+ const timestamp = await getTransactionTimestamp(txHash);
+ logEvent(event.event, details, true, false, txHash, timestamp);
+ }
+ } catch (error) {
+ console.error('Error fetching historical events:', error);
+ }
+ }
+
+ function showError(section, message, txHash = null) {
+ const errorDiv = document.querySelector(`#${section} #error-message`);
+ if (errorDiv) errorDiv.textContent = message;
+ logEvent('Error', message, false, section === 'owner', txHash);
+ }
+
+ function showTxStatus(section, message) {
+ const statusDiv = document.querySelector(`#${section} #tx-status`);
+ if (statusDiv) statusDiv.innerHTML = message; // Changed to innerHTML to render links
+ }
+
+ // Event Listeners for Buttons
+ document.getElementById('connect-wallet-btn').addEventListener('click', connectWallet);
+ document.getElementById('switch-account-btn').addEventListener('click', switchAccount);
+ document.getElementById('disconnect-wallet-btn').addEventListener('click', disconnectWallet);
+ document.getElementById('add-amoy-btn').addEventListener('click', addAmoyNetwork);
+ document.getElementById('add-sale-token-btn').addEventListener('click', addSaleTokenToMetaMask);
+ document.getElementById('add-payment-token-btn').addEventListener('click', () => {
+ const dropdown = document.getElementById('payment-token-to-metamask');
+ dropdown.style.display = dropdown.style.display === 'none' ? 'inline-block' : 'none';
+ });
+ document.getElementById('payment-token-to-metamask').addEventListener('change', addPaymentTokenToMetaMask);
+ document.getElementById('refresh-btn').addEventListener('click', refreshPage);
+ document.getElementById('payment-token-select').addEventListener('change', updateTokenReceiveInfo); // Added to update approve section dynamically
+
+ // Wallet Connection Functions
+ async function connectWallet() {
+ if (!window.ethereum) {
+ showError('home', "Please install MetaMask!");
+ showWalletInstructions();
+ return;
+ }
+ try {
+ web3 = new Web3(window.ethereum);
+ await window.ethereum.request({ method: 'eth_requestAccounts' });
+ await initializeAfterConnect();
+ } catch (error) {
+ showError('home', "Failed to connect wallet: " + error.message);
+ }
+ }
+
+ async function switchAccount() {
+ try {
+ await window.ethereum.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
+ await initializeAfterConnect();
+ } catch (error) {
+ showError('home', "Failed to switch account: " + error.message);
+ }
+ }
+
+ async function disconnectWallet() {
+ userAddress = null;
+ ownerAddress = null;
+ contract = null;
+ saleTokenAddress = null;
+ tokenInfoMap.clear();
+ document.getElementById('wallet-info').style.display = 'none';
+ document.getElementById('connect-wallet-btn').style.display = 'inline-block';
+ document.getElementById('switch-account-btn').style.display = 'none';
+ document.getElementById('add-sale-token-btn').style.display = 'none';
+ document.getElementById('add-payment-token-btn').style.display = 'none';
+ document.getElementById('payment-token-to-metamask').style.display = 'none';
+ document.getElementById('disconnect-wallet-btn').style.display = 'none';
+ document.getElementById('home-btn').style.display = 'none';
+ document.getElementById('admin-btn').style.display = 'none';
+ document.getElementById('history').style.display = 'none';
+ document.getElementById('contract-address').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'contract-address\')">Copy</button>';
+ document.getElementById('sale-token').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'sale-token\')">Copy</button>';
+ document.getElementById('total-unsold').textContent = 'Connect First';
+ document.getElementById('min-buy-to-reward').textContent = 'Connect First';
+ document.getElementById('total-sold').textContent = 'Connect First';
+ document.getElementById('total-rewarded').textContent = 'Connect First';
+ document.getElementById('payment-tokens-body').innerHTML = '';
+ document.getElementById('contract-status').textContent = 'Unknown';
+ document.getElementById('approve-token-select').innerHTML = '<option value="">Select Payment Token</option>';
+ document.getElementById('payment-token-select').innerHTML = '<option value="">Select Payment Token</option>';
+ document.getElementById('rate-token').innerHTML = '<option value="">Select Payment Token</option>';
+ document.getElementById('reward-token').innerHTML = '<option value="">Select Payment Token</option>';
+ document.getElementById('remove-payment-token-select').innerHTML = '<option value="">Select Payment Token to Remove</option>';
+ document.getElementById('withdraw-token').innerHTML = '<option value="">Select Token to Withdraw</option>';
+ document.getElementById('payment-token-to-metamask').innerHTML = '<option value="">Select Payment Token</option>';
+ document.getElementById('log-body').innerHTML = '';
+ logEvent('Wallet Disconnected', 'Disconnected successfully');
+ }
+
+ async function addAmoyNetwork() {
+ try {
+ await window.ethereum.request({
+ method: 'wallet_addEthereumChain',
+ params: [{
+ chainId: '0x13882',
+ chainName: 'Polygon Amoy',
+ rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+ nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+ blockExplorerUrls: ['https://amoy.polygonscan.com/']
+ }]
+ });
+ logEvent('Network Added', 'Amoy network added to MetaMask', true, true);
+ } catch (error) {
+ showError('home', "Failed to add Amoy network: " + error.message);
+ }
+ }
+
+ async function addSaleTokenToMetaMask() {
+    if (!saleTokenAddress) return;
+    try {
+        const tokenInfo = await getTokenInfo(saleTokenAddress);
+        await window.ethereum.request({
+            method: 'wallet_watchAsset',
+            params: {
+                type: 'ERC20',
+                options: {
+                    address: saleTokenAddress,
+                    symbol: tokenInfo.symbol,
+                    decimals: tokenInfo.decimals,
+                    image: ''
                 }
-            } catch (error) {
-                console.error('Error fetching accepted tokens:', error);
             }
-            return Array.from(acceptedTokens);
-        }
-
-        async function updatePaymentTokensTable() {
-            if (!contract) return;
-            try {
-                const acceptedTokens = await fetchAcceptedPaymentTokens();
-                const tbody = document.getElementById('payment-tokens-body');
-                tbody.innerHTML = '';
-                for (const tokenAddress of acceptedTokens) {
-                    const tokenInfo = await contract.methods.paymentTokens(tokenAddress).call();
-                    const tokenDetails = await getTokenInfo(tokenAddress);
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${tokenDetails.name} (${tokenDetails.symbol})</td>
-                        <td>${tokenInfo.rate}</td>
-                        <td>${tokenInfo.reward}</td>
-                        <td>${parseFloat(web3.utils.fromWei(tokenInfo.totalRaised, 'ether')).toFixed(2)}</td>
-                    `;
-                    tbody.appendChild(row);
-                }
-            } catch (error) {
-                showError('home', "Error updating payment tokens table: " + error.message);
-            }
-        }
-
-        async function getTransactionTimestamp(txHash) {
-            try {
-                const receipt = await web3.eth.getTransactionReceipt(txHash);
-                const block = await web3.eth.getBlock(receipt.blockNumber);
-                return new Date(block.timestamp * 1000).toLocaleString();
-            } catch (error) {
-                console.error(`Error fetching timestamp for tx ${txHash}:`, error);
-                return new Date().toLocaleString();
-            }
-        }
-
-        function logEvent(eventName, details, isSuccess = true, isAdminEvent = false, txHash = null, timestamp = null) {
-            const logBody = document.getElementById('log-body');
-            const row = document.createElement('tr');
-            row.className = isSuccess ? 'event-success' : 'event-error';
-            const detailsCell = txHash 
-                ? `<a href="https://amoy.polygonscan.com/tx/${txHash}" target="_blank">${details}</a>`
-                : details;
-            const time = timestamp || (txHash ? 'Pending...' : new Date().toLocaleString());
-            row.innerHTML = `<td>${time}</td><td>${eventName}</td><td>${detailsCell}</td>`;
-            logBody.insertBefore(row, logBody.firstChild);
-            if (txHash && !timestamp) {
-                getTransactionTimestamp(txHash).then(ts => {
-                    row.cells[0].textContent = ts;
-                });
-            }
-        }
-
-        async function fetchAndLogHistoricalEvents() {
-            try {
-                const events = await contract.getPastEvents('allEvents', { fromBlock: 0, toBlock: 'latest' });
-                for (const event of events) {
-                    const txHash = event.transactionHash;
-                    const details = formatEventDetails(event);
-                    const timestamp = await getTransactionTimestamp(txHash);
-                    logEvent(event.event, details, true, false, txHash, timestamp);
-                }
-            } catch (error) {
-                console.error('Error fetching historical events:', error);
-            }
-        }
-
-        function showError(section, message, txHash = null) {
-            const errorDiv = document.querySelector(`#${section} #error-message`);
-            if (errorDiv) errorDiv.textContent = message;
-            logEvent('Error', message, false, section === 'owner', txHash);
-        }
-
-        function showTxStatus(section, message) {
-            const statusDiv = document.querySelector(`#${section} #tx-status`);
-            if (statusDiv) statusDiv.textContent = message;
-        }
-
-        // Event Listeners for Buttons
-        document.getElementById('connect-wallet-btn').addEventListener('click', connectWallet);
-        document.getElementById('switch-account-btn').addEventListener('click', switchAccount);
-        document.getElementById('disconnect-wallet-btn').addEventListener('click', disconnectWallet);
-        document.getElementById('add-amoy-btn').addEventListener('click', addAmoyNetwork);
-        document.getElementById('add-sale-token-btn').addEventListener('click', addSaleTokenToMetaMask);
-        document.getElementById('add-payment-token-btn').addEventListener('click', () => {
-            const dropdown = document.getElementById('payment-token-to-metamask');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'inline-block' : 'none';
         });
-        document.getElementById('payment-token-to-metamask').addEventListener('change', addPaymentTokenToMetaMask);
-        document.getElementById('refresh-btn').addEventListener('click', refreshPage);
+        logEvent('Token Added', `Added ${tokenInfo.symbol} to MetaMask`);
+    } catch (error) {
+        showError('home', "Failed to add sale token to MetaMask: " + error.message);
+    }
+}
 
-        // Wallet Connection Functions
-        async function connectWallet() {
-            if (!window.ethereum) {
-                showError('home', "Please install MetaMask!");
-                showWalletInstructions();
-                return;
-            }
-            try {
-                web3 = new Web3(window.ethereum);
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-                await initializeAfterConnect();
-            } catch (error) {
-                showError('home', "Failed to connect wallet: " + error.message);
-            }
-        }
-
-        async function switchAccount() {
-            try {
-                await window.ethereum.request({ method: 'wallet_requestPermissions', params: [{ eth_accounts: {} }] });
-                await initializeAfterConnect();
-            } catch (error) {
-                showError('home', "Failed to switch account: " + error.message);
-            }
-        }
-
-        async function disconnectWallet() {
-            userAddress = null;
-            ownerAddress = null;
-            contract = null;
-            saleTokenAddress = null;
-            tokenInfoMap.clear();
-            document.getElementById('wallet-info').style.display = 'none';
-            document.getElementById('connect-wallet-btn').style.display = 'inline-block';
-            document.getElementById('switch-account-btn').style.display = 'none';
-            document.getElementById('add-sale-token-btn').style.display = 'none';
-            document.getElementById('add-payment-token-btn').style.display = 'none';
-            document.getElementById('payment-token-to-metamask').style.display = 'none';
-            document.getElementById('disconnect-wallet-btn').style.display = 'none';
-            document.getElementById('home-btn').style.display = 'none';
-            document.getElementById('admin-btn').style.display = 'none';
-            document.getElementById('history').style.display = 'none';
-            document.getElementById('contract-address').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'contract-address\')">Copy</button>';
-            document.getElementById('sale-token').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'sale-token\')">Copy</button>';
-            document.getElementById('total-unsold').textContent = 'Connect First';
-            document.getElementById('min-buy-to-reward').textContent = 'Connect First';
-            document.getElementById('total-sold').textContent = 'Connect First';
-            document.getElementById('total-rewarded').textContent = 'Connect First';
-            document.getElementById('payment-tokens-body').innerHTML = '';
-            document.getElementById('contract-status').textContent = 'Unknown';
-            document.getElementById('approve-token-select').innerHTML = '<option value="">Select Payment Token</option>';
-            document.getElementById('payment-token-select').innerHTML = '<option value="">Select Payment Token</option>';
-            document.getElementById('rate-token').innerHTML = '<option value="">Select Payment Token</option>';
-            document.getElementById('reward-token').innerHTML = '<option value="">Select Payment Token</option>';
-            document.getElementById('remove-payment-token-select').innerHTML = '<option value="">Select Payment Token to Remove</option>';
-            document.getElementById('withdraw-token').innerHTML = '<option value="">Select Token to Withdraw</option>';
-            document.getElementById('payment-token-to-metamask').innerHTML = '<option value="">Select Payment Token</option>';
-            document.getElementById('log-body').innerHTML = '';
-            logEvent('Wallet Disconnected', 'Disconnected successfully');
-        }
-
-        async function addAmoyNetwork() {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                        chainId: '0x13882',
-                        chainName: 'Polygon Amoy',
-                        rpcUrls: ['https://rpc-amoy.polygon.technology/'],
-                        nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
-                        blockExplorerUrls: ['https://amoy.polygonscan.com/']
-                    }]
-                });
-                logEvent('Network Added', 'Amoy network added to MetaMask', true, true);
-            } catch (error) {
-                showError('home', "Failed to add Amoy network: " + error.message);
-            }
-        }
-
-        async function addSaleTokenToMetaMask() {
-            if (!saleTokenAddress) return;
-            try {
-                const tokenInfo = await getTokenInfo(saleTokenAddress);
-                await window.ethereum.request({
-                    method: 'wallet_watchAsset',
-                    params: {
-                        type: 'ERC20',
-                        options: {
-                            address: saleTokenAddress,
-                            symbol: tokenInfo.symbol,
-                            decimals: tokenInfo.decimals,
-                            image: ''
-                        }
-                    }
-                });
-                logEvent('Token Added', `Added ${tokenInfo.symbol} to MetaMask`);
-            } catch (error) {
-                showError('home', "Failed to add sale token to MetaMask: " + error.message);
-            }
-        }
-
-        async function addPaymentTokenToMetaMask() {
-            const tokenAddress = document.getElementById('payment-token-to-metamask').value;
-            if (!tokenAddress || tokenAddress === NATIVE_TOKEN_ADDRESS) return;
-            try {
-                const tokenInfo = await getTokenInfo(tokenAddress);
-                await window.ethereum.request({
-                    method: 'wallet_watchAsset',
-                    params: {
-                        type: 'ERC20',
-                        options: {
-                            address: tokenAddress,
-                            symbol: tokenInfo.symbol,
-                            decimals: tokenInfo.decimals,
-                            image: ''
-                        }
-                    }
-                });
-                logEvent('Token Added', `Added ${tokenInfo.symbol} to MetaMask`);
-            } catch (error) {
-                showError('home', "Failed to add payment token to MetaMask: " + error.message);
-            }
-        }
-
-        async function refreshPage() {
-            if (!contract) return;
-            await updateContractInfo();
-            await updateUserBalance();
-            await updateAllDropdowns();
-            await updatePaymentTokensTable();
-            logEvent('Refresh', 'Page refreshed successfully');
-        }
-
-        async function initializeAfterConnect() {
-            const accounts = await web3.eth.getAccounts();
-            userAddress = accounts[0];
-            const chainId = await web3.eth.getChainId();
-            const networkName = chainId === 80002 ? 'Polygon Amoy' : 'Unknown Network';
-            if (chainId !== 80002) await switchToAmoy();
-            contract = new web3.eth.Contract(GrandSaleABI, CONTRACT_ADDRESS);
-            ownerAddress = await contract.methods.owner().call();
-            document.getElementById('wallet-info').style.display = 'block';
-            document.getElementById('connected-address').innerHTML = `Connected Address: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
-            document.getElementById('connected-address').onclick = () => { navigator.clipboard.writeText(userAddress); logEvent('Copy', 'Wallet address copied to clipboard'); };
-            document.getElementById('connected-network').innerHTML = `Connected Network: ${networkName}`;
-            document.getElementById('connect-wallet-btn').style.display = 'none';
-            document.getElementById('switch-account-btn').style.display = 'inline-block';
-            document.getElementById('disconnect-wallet-btn').style.display = 'inline-block';
-            document.getElementById('add-payment-token-btn').style.display = 'inline-block';
-            document.getElementById('contract-address').innerHTML = `${CONTRACT_ADDRESS}<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button>`;
-            document.getElementById('history').style.display = 'block';
-            const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
-            document.getElementById('home-btn').style.display = isOwner && document.getElementById('owner').classList.contains('active') ? 'inline-block' : 'none';
-            document.getElementById('admin-btn').style.display = isOwner && document.getElementById('home').classList.contains('active') ? 'inline-block' : 'none';
-            await updateContractInfo();
-            await updateAllDropdowns();
-            await updatePaymentTokensTable();
-            await updateUserBalance();
-            document.getElementById('log-body').innerHTML = '';
-            await fetchAndLogHistoricalEvents();
-            setupEventListeners();
-            logEvent('Wallet Connected', `Connected to ${userAddress}`);
-        }
-
-        async function switchToAmoy() {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x13882' }]
-                });
-            } catch (switchError) {
-                if (switchError.code === 4902) await addAmoyNetwork();
-                else throw switchError;
-            }
-        }
-
-        function showWalletInstructions() {
-            const instructions = document.getElementById('wallet-instructions');
-            instructions.style.display = 'block';
-            instructions.innerHTML = `<p>Please install MetaMask from <a href="https://metamask.io" target="_blank">metamask.io</a>.</p>`;
-        }
-
-        function copyToClipboard(elementId) {
-            let text;
-            if (elementId === 'contract-address') {
-                text = CONTRACT_ADDRESS;
-            } else if (elementId === 'sale-token') {
-                text = saleTokenAddress;
-            }
-            navigator.clipboard.writeText(text);
-            logEvent('Copy', `Copied ${elementId === 'contract-address' ? 'Contract Address' : 'Sale Token Address'} to clipboard`);
-        }
-
-        // UI Functions
-        function showSection(sectionId) {
-            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
-            const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
-            document.getElementById('home-btn').style.display = isOwner && sectionId === 'owner' ? 'inline-block' : 'none';
-            document.getElementById('admin-btn').style.display = isOwner && sectionId === 'home' ? 'inline-block' : 'none';
-            logEvent('Section Changed', `Switched to ${sectionId}`, true, sectionId === 'owner');
-        }
-
-        async function updateContractInfo() {
-            if (!contract) return;
-            try {
-                saleTokenAddress = await contract.methods.token().call();
-                document.getElementById('add-sale-token-btn').style.display = 'inline-block';
-                const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
-                const totalUnsold = await saleTokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
-                const minBuyToReward = await contract.methods.minBuyToReward().call();
-                const totalSold = await contract.methods.totalSold().call();
-                const totalRewarded = await contract.methods.totalRewarded().call();
-                const paused = await contract.methods.paused().call();
-                const tokenInfo = await getTokenInfo(saleTokenAddress);
-                document.getElementById('sale-token').innerHTML = `${tokenInfo.symbol} (${saleTokenAddress})<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button>`;
-                document.getElementById('total-unsold').textContent = parseFloat(web3.utils.fromWei(totalUnsold, 'ether')).toFixed(2);
-                document.getElementById('min-buy-to-reward').textContent = parseFloat(web3.utils.fromWei(minBuyToReward, 'ether')).toFixed(2);
-                document.getElementById('total-sold').textContent = parseFloat(web3.utils.fromWei(totalSold, 'ether')).toFixed(2);
-                document.getElementById('total-rewarded').textContent = parseFloat(web3.utils.fromWei(totalRewarded, 'ether')).toFixed(2);
-                document.getElementById('contract-status').textContent = paused ? 'Paused' : 'Unpaused';
-            } catch (error) {
-                showError('home', "Error updating contract info: " + error.message);
-            }
-        }
-
-        async function updateUserBalance() {
-            if (!contract || !userAddress) return;
-            try {
-                const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
-                const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
-                document.getElementById('user-sale-balance').textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${saleTokenSymbol}`;
-                document.getElementById('send-balance').textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${saleTokenSymbol}`;
-            } catch (error) {
-                showError('home', "Error updating user balance: " + error.message);
-            }
-        }
-
-        async function updateApproveBalance() {
-            const tokenAddress = document.getElementById('approve-token-select').value;
-            const balanceSpan = document.getElementById('approve-balance');
-            if (!tokenAddress || !userAddress) {
-                balanceSpan.textContent = '0';
-                return;
-            }
-            try {
-                let balance;
-                if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
-                    balance = await web3.eth.getBalance(userAddress);
-                } else {
-                    const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
-                    balance = await tokenContract.methods.balanceOf(userAddress).call();
+async function addPaymentTokenToMetaMask() {
+    const tokenAddress = document.getElementById('payment-token-to-metamask').value;
+    if (!tokenAddress || tokenAddress === NATIVE_TOKEN_ADDRESS) return;
+    try {
+        const tokenInfo = await getTokenInfo(tokenAddress);
+        await window.ethereum.request({
+            method: 'wallet_watchAsset',
+            params: {
+                type: 'ERC20',
+                options: {
+                    address: tokenAddress,
+                    symbol: tokenInfo.symbol,
+                    decimals: tokenInfo.decimals,
+                    image: ''
                 }
-                const tokenInfo = await getTokenInfo(tokenAddress);
-                balanceSpan.textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${tokenInfo.symbol}`;
-            } catch (error) {
-                balanceSpan.textContent = '0';
-                showError('home', "Error updating approve balance: " + error.message);
+            }
+        });
+        logEvent('Token Added', `Added ${tokenInfo.symbol} to MetaMask`);
+    } catch (error) {
+        showError('home', "Failed to add payment token to MetaMask: " + error.message);
+    }
+}
+
+async function refreshPage() {
+    if (!contract) return;
+    await updateContractInfo();
+    await updateUserBalance();
+    await updateAllDropdowns();
+    await updatePaymentTokensTable();
+    logEvent('Refresh', 'Page refreshed successfully');
+}
+
+async function initializeAfterConnect() {
+    const accounts = await web3.eth.getAccounts();
+    userAddress = accounts[0];
+    const chainId = await web3.eth.getChainId();
+    const networkName = chainId === 80002 ? 'Polygon Amoy' : 'Unknown Network';
+    if (chainId !== 80002) await switchToAmoy();
+    contract = new web3.eth.Contract(GrandSaleABI, CONTRACT_ADDRESS);
+    ownerAddress = await contract.methods.owner().call();
+    document.getElementById('wallet-info').style.display = 'block';
+    document.getElementById('connected-address').innerHTML = `Connected Address: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+    document.getElementById('connected-address').onclick = () => { navigator.clipboard.writeText(userAddress); logEvent('Copy', 'Wallet address copied to clipboard'); };
+    document.getElementById('connected-network').innerHTML = `Connected Network: ${networkName}`;
+    document.getElementById('connect-wallet-btn').style.display = 'none';
+    document.getElementById('switch-account-btn').style.display = 'inline-block';
+    document.getElementById('disconnect-wallet-btn').style.display = 'inline-block';
+    document.getElementById('add-payment-token-btn').style.display = 'inline-block';
+    document.getElementById('contract-address').innerHTML = `${CONTRACT_ADDRESS}<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button>`;
+    document.getElementById('history').style.display = 'block';
+    const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
+    document.getElementById('home-btn').style.display = isOwner && document.getElementById('owner').classList.contains('active') ? 'inline-block' : 'none';
+    document.getElementById('admin-btn').style.display = isOwner && document.getElementById('home').classList.contains('active') ? 'inline-block' : 'none';
+    await updateContractInfo();
+    await updateAllDropdowns();
+    await updatePaymentTokensTable();
+    await updateUserBalance();
+    document.getElementById('log-body').innerHTML = '';
+    await fetchAndLogHistoricalEvents();
+    setupEventListeners();
+    logEvent('Wallet Connected', `Connected to ${userAddress}`);
+}
+
+async function switchToAmoy() {
+    try {
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x13882' }]
+        });
+    } catch (switchError) {
+        if (switchError.code === 4902) await addAmoyNetwork();
+        else throw switchError;
+    }
+}
+
+function showWalletInstructions() {
+    const instructions = document.getElementById('wallet-instructions');
+    instructions.style.display = 'block';
+    instructions.innerHTML = `<p>Please install MetaMask from <a href="https://metamask.io" target="_blank">metamask.io</a>.</p>`;
+}
+
+function copyToClipboard(elementId) {
+    let text;
+    if (elementId === 'contract-address') {
+        text = CONTRACT_ADDRESS;
+    } else if (elementId === 'sale-token') {
+        text = saleTokenAddress;
+    }
+    navigator.clipboard.writeText(text);
+    logEvent('Copy', `Copied ${elementId === 'contract-address' ? 'Contract Address' : 'Sale Token Address'} to clipboard`);
+}
+
+// UI Functions
+function showSection(sectionId) {
+    document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+    const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
+    document.getElementById('home-btn').style.display = isOwner && sectionId === 'owner' ? 'inline-block' : 'none';
+    document.getElementById('admin-btn').style.display = isOwner && sectionId === 'home' ? 'inline-block' : 'none';
+    logEvent('Section Changed', `Switched to ${sectionId}`, true, sectionId === 'owner');
+}
+
+async function updateContractInfo() {
+    if (!contract) return;
+    try {
+        saleTokenAddress = await contract.methods.token().call();
+        document.getElementById('add-sale-token-btn').style.display = 'inline-block';
+        const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
+        const totalUnsold = await saleTokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
+        const minBuyToReward = await contract.methods.minBuyToReward().call();
+        const totalSold = await contract.methods.totalSold().call();
+        const totalRewarded = await contract.methods.totalRewarded().call();
+        const paused = await contract.methods.paused().call();
+        const tokenInfo = await getTokenInfo(saleTokenAddress);
+        document.getElementById('sale-token').innerHTML = `${tokenInfo.symbol} (${saleTokenAddress})<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button>`;
+        document.getElementById('total-unsold').textContent = parseFloat(web3.utils.fromWei(totalUnsold, 'ether')).toFixed(2);
+        document.getElementById('min-buy-to-reward').textContent = parseFloat(web3.utils.fromWei(minBuyToReward, 'ether')).toFixed(2);
+        document.getElementById('total-sold').textContent = parseFloat(web3.utils.fromWei(totalSold, 'ether')).toFixed(2);
+        document.getElementById('total-rewarded').textContent = parseFloat(web3.utils.fromWei(totalRewarded, 'ether')).toFixed(2);
+        document.getElementById('contract-status').textContent = paused ? 'Paused' : 'Unpaused';
+    } catch (error) {
+        showError('home', "Error updating contract info: " + error.message);
+    }
+}
+
+async function updateUserBalance() {
+    if (!contract || !userAddress) return;
+    try {
+        const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
+        const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
+        document.getElementById('user-sale-balance').textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${saleTokenSymbol}`;
+        document.getElementById('send-balance').textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${saleTokenSymbol}`;
+    } catch (error) {
+        showError('home', "Error updating user balance: " + error.message);
+    }
+}
+
+async function updateApproveBalance() {
+    const tokenAddress = document.getElementById('approve-token-select').value;
+    const balanceSpan = document.getElementById('approve-balance');
+    if (!tokenAddress || !userAddress) {
+        balanceSpan.textContent = '0';
+        return;
+    }
+    try {
+        let balance;
+        if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
+            balance = await web3.eth.getBalance(userAddress);
+        } else {
+            const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
+            balance = await tokenContract.methods.balanceOf(userAddress).call();
+        }
+        const tokenInfo = await getTokenInfo(tokenAddress);
+        balanceSpan.textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${tokenInfo.symbol}`;
+    } catch (error) {
+        balanceSpan.textContent = '0';
+        showError('home', "Error updating approve balance: " + error.message);
+    }
+}
+
+async function updateBuyBalance() {
+    const tokenAddress = document.getElementById('payment-token-select').value;
+    const balanceSpan = document.getElementById('buy-balance');
+    const maxBtn = document.querySelector('#payment-amount + .max-btn');
+    if (!tokenAddress || !userAddress) {
+        balanceSpan.textContent = '0';
+        maxBtn.style.display = 'none';
+        return;
+    }
+    try {
+        let balance;
+        if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
+            balance = await web3.eth.getBalance(userAddress);
+        } else {
+            const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
+            balance = await tokenContract.methods.balanceOf(userAddress).call();
+        }
+        const tokenInfo = await getTokenInfo(tokenAddress);
+        balanceSpan.textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${tokenInfo.symbol}`;
+        maxBtn.style.display = 'inline-block';
+    } catch (error) {
+        balanceSpan.textContent = '0';
+        showError('home', "Error updating buy balance: " + error.message);
+    }
+}
+
+async function estimateGasForBuyWithNative() {
+    try {
+        const gasEstimate = await contract.methods.buyWithNative().estimateGas({ from: userAddress, value: web3.utils.toWei('1', 'ether') });
+        const gasPrice = await web3.eth.getGasPrice();
+        return BigInt(gasEstimate) * BigInt(gasPrice);
+    } catch (error) {
+        console.error('Error estimating gas:', error);
+        return BigInt(0);
+    }
+}
+
+async function setMaxBuy() {
+    const tokenAddress = document.getElementById('payment-token-select').value;
+    if (!tokenAddress || !userAddress) return;
+    try {
+        let balance;
+        if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
+            balance = await web3.eth.getBalance(userAddress);
+            const gasFee = await estimateGasForBuyWithNative();
+            const doubleGasFee = gasFee * BigInt(2);
+            if (BigInt(balance) > doubleGasFee) {
+                balance = BigInt(balance) - doubleGasFee;
+            } else {
+                balance = BigInt(0);
+            }
+        } else {
+            const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
+            balance = await tokenContract.methods.balanceOf(userAddress).call();
+        }
+        const tokenInfo = await getTokenInfo(tokenAddress);
+        const maxAmount = parseFloat(web3.utils.fromWei(balance.toString(), 'ether')).toFixed(2);
+        document.getElementById('payment-amount').value = maxAmount;
+        updateTokenReceiveInfo();
+    } catch (error) {
+        showError('home', "Error setting max buy amount: " + error.message);
+    }
+}
+
+function setMaxSend() {
+    const balance = document.getElementById('send-balance').textContent.split(' ')[0];
+    document.getElementById('send-amount').value = balance;
+}
+
+async function updatePaymentTokenDropdowns() {
+    if (!contract) return;
+    try {
+        const acceptedTokens = await fetchAcceptedPaymentTokens();
+        const dropdowns = {
+            'approve-token-select': false,
+            'payment-token-select': true,
+            'rate-token': true,
+            'reward-token': true,
+            'remove-payment-token-select': true,
+            'payment-token-to-metamask': false
+        };
+        for (const [id, includeNative] of Object.entries(dropdowns)) {
+            const select = document.getElementById(id);
+            select.innerHTML = '<option value="">Select Payment Token</option>';
+            for (const tokenAddress of acceptedTokens) {
+                if (!includeNative && tokenAddress === NATIVE_TOKEN_ADDRESS) continue;
+                const info = await getTokenInfo(tokenAddress);
+                const option = document.createElement('option');
+                option.value = tokenAddress;
+                option.textContent = `${info.name} (${info.symbol})`;
+                select.appendChild(option);
             }
         }
+    } catch (error) {
+        showError('home', "Error updating payment token list: " + error.message);
+    }
+}
 
-        async function updateBuyBalance() {
-            const tokenAddress = document.getElementById('payment-token-select').value;
-            const balanceSpan = document.getElementById('buy-balance');
-            const maxBtn = document.querySelector('#payment-amount + .max-btn');
-            if (!tokenAddress || !userAddress) {
-                balanceSpan.textContent = '0';
-                maxBtn.style.display = 'none';
-                return;
+async function updateWithdrawDropdown() {
+    if (!contract) return;
+    try {
+        const select = document.getElementById('withdraw-token');
+        select.innerHTML = '<option value="">Select Token to Withdraw</option>';
+        const acceptedTokens = await fetchAcceptedPaymentTokens();
+        const tokens = new Set([NATIVE_TOKEN_ADDRESS, saleTokenAddress, ...acceptedTokens]);
+        for (const address of tokens) {
+            let balance;
+            if (address === NATIVE_TOKEN_ADDRESS) balance = await web3.eth.getBalance(CONTRACT_ADDRESS);
+            else {
+                const tokenContract = new web3.eth.Contract(ERC20ABI, address);
+                balance = await tokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
             }
-            try {
-                let balance;
-                if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
-                    balance = await web3.eth.getBalance(userAddress);
-                } else {
-                    const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
-                    balance = await tokenContract.methods.balanceOf(userAddress).call();
-                }
-                const tokenInfo = await getTokenInfo(tokenAddress);
-                balanceSpan.textContent = `${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)} ${tokenInfo.symbol}`;
-                maxBtn.style.display = 'inline-block';
-            } catch (error) {
-                balanceSpan.textContent = '0';
-                showError('home', "Error updating buy balance: " + error.message);
-            }
-        }
-
-        async function estimateGasForBuyWithNative() {
-            try {
-                const gasEstimate = await contract.methods.buyWithNative().estimateGas({ from: userAddress, value: web3.utils.toWei('1', 'ether') });
-                const gasPrice = await web3.eth.getGasPrice();
-                return BigInt(gasEstimate) * BigInt(gasPrice);
-            } catch (error) {
-                console.error('Error estimating gas:', error);
-                return BigInt(0);
+            if (BigInt(balance) > 0) {
+                const info = await getTokenInfo(address);
+                const option = document.createElement('option');
+                option.value = address;
+                option.textContent = `${info.name} (${info.symbol}) - Balance: ${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)}`;
+                select.appendChild(option);
             }
         }
+    } catch (error) {
+        showError('owner', "Error updating withdraw dropdown: " + error.message);
+    }
+}
 
-        async function setMaxBuy() {
-            const tokenAddress = document.getElementById('payment-token-select').value;
-            if (!tokenAddress || !userAddress) return;
-            try {
-                let balance;
-                if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
-                    balance = await web3.eth.getBalance(userAddress);
-                    const gasFee = await estimateGasForBuyWithNative();
-                    const doubleGasFee = gasFee * BigInt(2);
-                    if (BigInt(balance) > doubleGasFee) {
-                        balance = BigInt(balance) - doubleGasFee;
-                    } else {
-                        balance = BigInt(0);
-                    }
-                } else {
-                    const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
-                    balance = await tokenContract.methods.balanceOf(userAddress).call();
-                }
-                const tokenInfo = await getTokenInfo(tokenAddress);
-                const maxAmount = parseFloat(web3.utils.fromWei(balance.toString(), 'ether')).toFixed(2);
-                document.getElementById('payment-amount').value = maxAmount;
-                updateTokenReceiveInfo();
-            } catch (error) {
-                showError('home', "Error setting max buy amount: " + error.message);
-            }
+async function updateAllDropdowns() {
+    await updatePaymentTokenDropdowns();
+    await updateWithdrawDropdown();
+}
+
+// Admin Functions
+async function addPaymentToken() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    const paymentToken = document.getElementById('payment-token-address').value.trim();
+    if (!web3.utils.isAddress(paymentToken)) return showError('owner', 'Invalid payment token address');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const tx = await contract.methods.addPaymentToken(paymentToken).send({ from: userAddress, gasPrice });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        await getTokenInfo(paymentToken);
+        logEvent('Payment Token Added', `Added ${paymentToken}`, true, true, tx.transactionHash);
+        await updateAllDropdowns();
+        await updatePaymentTokensTable();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
+
+async function removePaymentToken() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    const paymentToken = document.getElementById('remove-payment-token-select').value;
+    if (!paymentToken) return showError('owner', 'Please select a payment token');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
+        if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
+        const tx = await contract.methods.removePaymentToken(paymentToken).send({ from: userAddress, gasPrice });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Payment Token Removed', `Removed ${paymentToken}`, true, true, tx.transactionHash);
+        await updateAllDropdowns();
+        await updatePaymentTokensTable();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
+
+async function setRate() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    const paymentToken = document.getElementById('rate-token').value;
+    const rate = document.getElementById('rate-value').value;
+    if (!paymentToken) return showError('owner', 'Please select a payment token');
+    if (!rate || parseInt(rate) <= 0) return showError('owner', 'Invalid rate');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
+        if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
+        const tx = await contract.methods.setRate(paymentToken, rate).send({ from: userAddress, gasPrice });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Rate Set', `Set rate for ${paymentToken} to ${rate}`, true, true, tx.transactionHash);
+        await updatePaymentTokensTable();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
+
+async function removeRate() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    const paymentToken = document.getElementById('rate-token').value;
+    if (!paymentToken) return showError('owner', 'Please select a payment token');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
+        if (!tokenInfo.isAccepted || tokenInfo.rate == 0) return showError('owner', 'No rate set or token not accepted');
+        const tx = await contract.methods.removeRate(paymentToken).send({ from: userAddress, gasPrice });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Rate Removed', `Removed rate for ${paymentToken}`, true, true, tx.transactionHash);
+        await updatePaymentTokensTable();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
+
+async function setReward() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    const paymentToken = document.getElementById('reward-token').value;
+    const reward = document.getElementById('reward-value').value;
+    if (!paymentToken) return showError('owner', 'Please select a payment token');
+    if (!reward || parseInt(reward) <= 0 || parseInt(reward) > 100) return showError('owner', 'Reward must be between 1 and 100');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
+        if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
+        const tx = await contract.methods.setReward(paymentToken, reward).send({ from: userAddress, gasPrice });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Reward Set', `Set reward for ${paymentToken} to ${reward}%`, true, true, tx.transactionHash);
+        await updatePaymentTokensTable();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
+
+async function removeReward() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    const paymentToken = document.getElementById('reward-token').value;
+    if (!paymentToken) return showError('owner', 'Please select a payment token');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
+        if (!tokenInfo.isAccepted || tokenInfo.reward == 0) return showError('owner', 'No reward set or token not accepted');
+        const tx = await contract.methods.removeReward(paymentToken).send({ from: userAddress, gasPrice });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Reward Removed', `Removed reward for ${paymentToken}`, true, true, tx.transactionHash);
+        await updatePaymentTokensTable();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
+
+async function setMinBuyToReward() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    const minBuy = document.getElementById('min-buy-value').value;
+    if (!minBuy || parseFloat(minBuy) <= 0) return showError('owner', 'Invalid minimum buy amount');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const weiAmount = web3.utils.toWei(minBuy, 'ether');
+        const tx = await contract.methods.setMinBuyToReward(weiAmount).send({ from: userAddress, gasPrice });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Min Buy Set', `Set minimum buy to ${minBuy}`, true, true, tx.transactionHash);
+        await updateContractInfo();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
+
+async function removeMinBuyToReward() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const minBuy = await contract.methods.minBuyToReward().call();
+        if (minBuy == 0) return showError('owner', 'Minimum buy already removed');
+        const tx = await contract.methods.removeMinBuyToReward().send({ from: userAddress, gasPrice });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Min Buy Removed', `Removed minimum buy`, true, true, tx.transactionHash);
+        await updateContractInfo();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
+
+async function togglePause() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const isPaused = await contract.methods.paused().call();
+        const method = isPaused ? contract.methods.unpause() : contract.methods.pause();
+        const tx = await method.send({ from: userAddress, gasPrice });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Pause Toggled', `${isPaused ? 'Unpaused' : 'Paused'}`, true, true, tx.transactionHash);
+        await updateContractInfo();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
+
+async function withdraw() {
+    if (!contract) return showError('owner', 'Please connect your wallet first!');
+    if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+    const tokenAddress = document.getElementById('withdraw-token').value;
+    const amount = document.getElementById('withdraw-amount').value;
+    if (!tokenAddress) return showError('owner', 'Please select a token');
+    if (!amount || parseFloat(amount) <= 0) return showError('owner', 'Invalid amount');
+    try {
+        showTxStatus('owner', 'Pending...');
+        const gasPrice = await web3.eth.getGasPrice();
+        const weiAmount = web3.utils.toWei(amount, 'ether');
+        let balance;
+        if (tokenAddress === NATIVE_TOKEN_ADDRESS) balance = await web3.eth.getBalance(CONTRACT_ADDRESS);
+        else {
+            const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
+            balance = await tokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
         }
+        if (BigInt(balance) < BigInt(weiAmount)) return showError('owner', 'Insufficient balance in contract');
+        const tx = await contract.methods.withdraw(tokenAddress, weiAmount).send({ from: userAddress, gasPrice, value: 0 });
+        showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Withdraw Success', `Withdrew ${amount} from ${tokenAddress}`, true, true, tx.transactionHash);
+        await updateWithdrawDropdown();
+    } catch (error) {
+        showTxStatus('owner', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('owner', message, error.transactionHash);
+    }
+}
 
-        function setMaxSend() {
-            const balance = document.getElementById('send-balance').textContent.split(' ')[0];
-            document.getElementById('send-amount').value = balance;
+// User Functions
+async function approveToken() {
+    if (!contract) return showError('home', 'Please connect your wallet first!');
+    const paymentToken = document.getElementById('approve-token-select').value;
+    if (!paymentToken) return showError('home', 'Please select a payment token');
+    try {
+        showTxStatus('home', 'Pending...');
+        const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
+        const maxAmount = '115792089237316195423570985008687907853269984665640564039457584007913129639935'; // 2^256 - 1
+        const gasPrice = await web3.eth.getGasPrice();
+        const tx = await tokenContract.methods.approve(CONTRACT_ADDRESS, maxAmount).send({ from: userAddress, gasPrice });
+        showTxStatus('home', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        const tokenInfo = await getTokenInfo(paymentToken);
+        logEvent('Approve Success', `Approved unlimited for ${tokenInfo.symbol}`, true, false, tx.transactionHash);
+        await updateApproveBalance();
+        await updateTokenReceiveInfo(); // Update UI after approval
+    } catch (error) {
+        showTxStatus('home', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('home', message, error.transactionHash);
+    }
+}
+
+async function buyTokens() {
+    if (!contract) return showError('home', 'Please connect your wallet first!');
+    const paymentToken = document.getElementById('payment-token-select').value;
+    const paymentAmount = document.getElementById('payment-amount').value;
+    if (!paymentToken) return showError('home', 'Please select a payment token');
+    if (!paymentAmount || parseFloat(paymentAmount) <= 0) return showError('home', 'Invalid payment amount');
+    try {
+        showTxStatus('home', 'Pending...');
+        const weiAmount = web3.utils.toWei(paymentAmount, 'ether');
+        const gasPrice = await web3.eth.getGasPrice();
+        let tx;
+        if (paymentToken === NATIVE_TOKEN_ADDRESS) {
+            const balance = await web3.eth.getBalance(userAddress);
+            if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient POL balance');
+            tx = await contract.methods.buyWithNative().send({ from: userAddress, value: weiAmount, gasPrice });
+            logEvent('Buy Success', `Bought with ${paymentAmount} POL`, true, false, tx.transactionHash);
+        } else {
+            const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
+            const balance = await tokenContract.methods.balanceOf(userAddress).call();
+            if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient token balance');
+            const allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
+            if (BigInt(allowance) < BigInt(weiAmount)) return showError('home', 'Insufficient allowance. Please approve first.');
+            tx = await contract.methods.buyWithToken(paymentToken, weiAmount).send({ from: userAddress, gasPrice });
+            const tokenInfo = await getTokenInfo(paymentToken);
+            logEvent('Buy Success', `Bought with ${paymentAmount} ${tokenInfo.symbol}`, true, false, tx.transactionHash);
         }
+        showTxStatus('home', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        await updateContractInfo();
+        await updateUserBalance();
+        await updatePaymentTokensTable();
+        await updateBuyBalance();
+    } catch (error) {
+        showTxStatus('home', '');
+        const message = error.message.includes('revert') ? 'Failed to secure funds' : error.message;
+        showError('home', message, error.transactionHash);
+    }
+}
 
-        async function updatePaymentTokenDropdowns() {
-            if (!contract) return;
-            try {
-                const acceptedTokens = await fetchAcceptedPaymentTokens();
-                const dropdowns = {
-                    'approve-token-select': false,
-                    'payment-token-select': true,
-                    'rate-token': true,
-                    'reward-token': true,
-                    'remove-payment-token-select': true,
-                    'payment-token-to-metamask': false
-                };
-                for (const [id, includeNative] of Object.entries(dropdowns)) {
-                    const select = document.getElementById(id);
-                    select.innerHTML = '<option value="">Select Payment Token</option>';
-                    for (const tokenAddress of acceptedTokens) {
-                        if (!includeNative && tokenAddress === NATIVE_TOKEN_ADDRESS) continue;
-                        const info = await getTokenInfo(tokenAddress);
-                        const option = document.createElement('option');
-                        option.value = tokenAddress;
-                        option.textContent = `${info.name} (${info.symbol})`;
-                        select.appendChild(option);
-                    }
-                }
-            } catch (error) {
-                showError('home', "Error updating payment token list: " + error.message);
-            }
+async function sendTokens() {
+    if (!contract) return showError('home', 'Please connect your wallet first!');
+    const recipient = document.getElementById('send-recipient').value.trim();
+    const amount = document.getElementById('send-amount').value;
+    if (!web3.utils.isAddress(recipient)) return showError('home', 'Invalid recipient address');
+    if (!amount || parseFloat(amount) <= 0) return showError('home', 'Invalid amount');
+    try {
+        showTxStatus('home', 'Pending...');
+        const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
+        const weiAmount = web3.utils.toWei(amount, 'ether');
+        const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
+        if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient sale token balance');
+        const gasPrice = await web3.eth.getGasPrice();
+        const tx = await saleTokenContract.methods.transfer(recipient, weiAmount).send({ from: userAddress, gasPrice });
+        showTxStatus('home', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
+        logEvent('Send Success', `Sent ${amount} ${saleTokenSymbol} to ${recipient}`, true, false, tx.transactionHash);
+        await updateUserBalance();
+    } catch (error) {
+        showTxStatus('home', '');
+        const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
+        showError('home', message, error.transactionHash);
+    }
+}
+
+async function updateTokenReceiveInfo() {
+    const paymentToken = document.getElementById('payment-token-select').value;
+    const paymentAmount = document.getElementById('payment-amount').value;
+    const infoDiv = document.getElementById('token-receive-info');
+    const approveSection = document.getElementById('approve-section');
+    if (!paymentToken || !paymentAmount || parseFloat(paymentAmount) <= 0) {
+        infoDiv.textContent = '';
+        approveSection.classList.remove('active');
+        return;
+    }
+    try {
+        const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
+        if (!tokenInfo.isAccepted || tokenInfo.rate == 0) {
+            infoDiv.textContent = 'Rate not set for this token';
+            approveSection.classList.remove('active');
+            return;
         }
-
-        async function updateWithdrawDropdown() {
-            if (!contract) return;
-            try {
-                const select = document.getElementById('withdraw-token');
-                select.innerHTML = '<option value="">Select Token to Withdraw</option>';
-                const acceptedTokens = await fetchAcceptedPaymentTokens();
-                const tokens = new Set([NATIVE_TOKEN_ADDRESS, saleTokenAddress, ...acceptedTokens]);
-                for (const address of tokens) {
-                    let balance;
-                    if (address === NATIVE_TOKEN_ADDRESS) balance = await web3.eth.getBalance(CONTRACT_ADDRESS);
-                    else {
-                        const tokenContract = new web3.eth.Contract(ERC20ABI, address);
-                        balance = await tokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
-                    }
-                    if (BigInt(balance) > 0) {
-                        const info = await getTokenInfo(address);
-                        const option = document.createElement('option');
-                        option.value = address;
-                        option.textContent = `${info.name} (${info.symbol}) - Balance: ${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)}`;
-                        select.appendChild(option);
-                    }
-                }
-            } catch (error) {
-                showError('owner', "Error updating withdraw dropdown: " + error.message);
-            }
-        }
-
-        async function updateAllDropdowns() {
-            await updatePaymentTokenDropdowns();
-            await updateWithdrawDropdown();
-        }
-
-        // Admin Functions
-        async function addPaymentToken() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            const paymentToken = document.getElementById('payment-token-address').value.trim();
-            if (!web3.utils.isAddress(paymentToken)) return showError('owner', 'Invalid payment token address');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const tx = await contract.methods.addPaymentToken(paymentToken).send({ from: userAddress, gasPrice });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                await getTokenInfo(paymentToken);
-                logEvent('Payment Token Added', `Added ${paymentToken}`, true, true, tx.transactionHash);
-                await updateAllDropdowns();
-                await updatePaymentTokensTable();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        async function removePaymentToken() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            const paymentToken = document.getElementById('remove-payment-token-select').value;
-            if (!paymentToken) return showError('owner', 'Please select a payment token');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-                if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
-                const tx = await contract.methods.removePaymentToken(paymentToken).send({ from: userAddress, gasPrice });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Payment Token Removed', `Removed ${paymentToken}`, true, true, tx.transactionHash);
-                await updateAllDropdowns();
-                await updatePaymentTokensTable();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        async function setRate() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            const paymentToken = document.getElementById('rate-token').value;
-            const rate = document.getElementById('rate-value').value;
-            if (!paymentToken) return showError('owner', 'Please select a payment token');
-            if (!rate || parseInt(rate) <= 0) return showError('owner', 'Invalid rate');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-                if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
-                const tx = await contract.methods.setRate(paymentToken, rate).send({ from: userAddress, gasPrice });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Rate Set', `Set rate for ${paymentToken} to ${rate}`, true, true, tx.transactionHash);
-                await updatePaymentTokensTable();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        async function removeRate() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            const paymentToken = document.getElementById('rate-token').value;
-            if (!paymentToken) return showError('owner', 'Please select a payment token');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-                if (!tokenInfo.isAccepted || tokenInfo.rate == 0) return showError('owner', 'No rate set or token not accepted');
-                const tx = await contract.methods.removeRate(paymentToken).send({ from: userAddress, gasPrice });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Rate Removed', `Removed rate for ${paymentToken}`, true, true, tx.transactionHash);
-                await updatePaymentTokensTable();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        async function setReward() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            const paymentToken = document.getElementById('reward-token').value;
-            const reward = document.getElementById('reward-value').value;
-            if (!paymentToken) return showError('owner', 'Please select a payment token');
-            if (!reward || parseInt(reward) <= 0 || parseInt(reward) > 100) return showError('owner', 'Reward must be between 1 and 100');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-                if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
-                const tx = await contract.methods.setReward(paymentToken, reward).send({ from: userAddress, gasPrice });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Reward Set', `Set reward for ${paymentToken} to ${reward}%`, true, true, tx.transactionHash);
-                await updatePaymentTokensTable();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        async function removeReward() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            const paymentToken = document.getElementById('reward-token').value;
-            if (!paymentToken) return showError('owner', 'Please select a payment token');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-                if (!tokenInfo.isAccepted || tokenInfo.reward == 0) return showError('owner', 'No reward set or token not accepted');
-                const tx = await contract.methods.removeReward(paymentToken).send({ from: userAddress, gasPrice });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Reward Removed', `Removed reward for ${paymentToken}`, true, true, tx.transactionHash);
-                await updatePaymentTokensTable();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        async function setMinBuyToReward() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            const minBuy = document.getElementById('min-buy-value').value;
-            if (!minBuy || parseFloat(minBuy) <= 0) return showError('owner', 'Invalid minimum buy amount');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const weiAmount = web3.utils.toWei(minBuy, 'ether');
-                const tx = await contract.methods.setMinBuyToReward(weiAmount).send({ from: userAddress, gasPrice });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Min Buy Set', `Set minimum buy to ${minBuy}`, true, true, tx.transactionHash);
-                await updateContractInfo();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        async function removeMinBuyToReward() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const minBuy = await contract.methods.minBuyToReward().call();
-                if (minBuy == 0) return showError('owner', 'Minimum buy already removed');
-                const tx = await contract.methods.removeMinBuyToReward().send({ from: userAddress, gasPrice });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Min Buy Removed', `Removed minimum buy`, true, true, tx.transactionHash);
-                await updateContractInfo();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        async function togglePause() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const isPaused = await contract.methods.paused().call();
-                const method = isPaused ? contract.methods.unpause() : contract.methods.pause();
-                const tx = await method.send({ from: userAddress, gasPrice });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Pause Toggled', `${isPaused ? 'Unpaused' : 'Paused'}`, true, true, tx.transactionHash);
-                await updateContractInfo();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        async function withdraw() {
-            if (!contract) return showError('owner', 'Please connect your wallet first!');
-            if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-            const tokenAddress = document.getElementById('withdraw-token').value;
-            const amount = document.getElementById('withdraw-amount').value;
-            if (!tokenAddress) return showError('owner', 'Please select a token');
-            if (!amount || parseFloat(amount) <= 0) return showError('owner', 'Invalid amount');
-            try {
-                showTxStatus('owner', 'Pending...');
-                const gasPrice = await web3.eth.getGasPrice();
-                const weiAmount = web3.utils.toWei(amount, 'ether');
-                let balance;
-                if (tokenAddress === NATIVE_TOKEN_ADDRESS) balance = await web3.eth.getBalance(CONTRACT_ADDRESS);
-                else {
-                    const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
-                    balance = await tokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
-                }
-                if (BigInt(balance) < BigInt(weiAmount)) return showError('owner', 'Insufficient balance in contract');
-                const tx = await contract.methods.withdraw(tokenAddress, weiAmount).send({ from: userAddress, gasPrice, value: 0 });
-                showTxStatus('owner', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Withdraw Success', `Withdrew ${amount} from ${tokenAddress}`, true, true, tx.transactionHash);
-                await updateWithdrawDropdown();
-            } catch (error) {
-                showTxStatus('owner', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('owner', message, error.transactionHash);
-            }
-        }
-
-        // User Functions
-        async function approveToken() {
-            if (!contract) return showError('home', 'Please connect your wallet first!');
-            const paymentToken = document.getElementById('approve-token-select').value;
-            if (!paymentToken) return showError('home', 'Please select a payment token');
-            try {
-                showTxStatus('home', 'Pending...');
-                const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
-                const maxAmount = '115792089237316195423570985008687907853269984665640564039457584007913129639935'; // 2^256 - 1
-                const gasPrice = await web3.eth.getGasPrice();
-                const tx = await tokenContract.methods.approve(CONTRACT_ADDRESS, maxAmount).send({ from: userAddress, gasPrice });
-                showTxStatus('home', `Success! Tx: ${tx.transactionHash}`);
-                const tokenInfo = await getTokenInfo(paymentToken);
-                logEvent('Approve Success', `Approved unlimited for ${tokenInfo.symbol}`, true, false, tx.transactionHash);
+        const tokenAmount = (parseFloat(paymentAmount) * parseInt(tokenInfo.rate)).toFixed(2);
+        infoDiv.textContent = `You will receive approximately ${tokenAmount} ${saleTokenSymbol}`;
+        if (paymentToken !== NATIVE_TOKEN_ADDRESS) {
+            const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
+            const allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
+            const weiAmount = web3.utils.toWei(paymentAmount, 'ether');
+            if (BigInt(allowance) < BigInt(weiAmount)) {
+                approveSection.classList.add('active');
+                document.getElementById('approve-token-select').value = paymentToken;
                 await updateApproveBalance();
-            } catch (error) {
-                showTxStatus('home', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('home', message, error.transactionHash);
+            } else {
+                approveSection.classList.remove('active');
             }
+        } else {
+            approveSection.classList.remove('active');
         }
+    } catch (error) {
+        infoDiv.textContent = 'Error calculating token amount';
+        approveSection.classList.remove('active');
+    }
+}
 
-        async function buyTokens() {
-            if (!contract) return showError('home', 'Please connect your wallet first!');
-            const paymentToken = document.getElementById('payment-token-select').value;
-            const paymentAmount = document.getElementById('payment-amount').value;
-            if (!paymentToken) return showError('home', 'Please select a payment token');
-            if (!paymentAmount || parseFloat(paymentAmount) <= 0) return showError('home', 'Invalid payment amount');
-            try {
-                showTxStatus('home', 'Pending...');
-                const weiAmount = web3.utils.toWei(paymentAmount, 'ether');
-                const gasPrice = await web3.eth.getGasPrice();
-                let tx;
-                if (paymentToken === NATIVE_TOKEN_ADDRESS) {
-                    const balance = await web3.eth.getBalance(userAddress);
-                    if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient POL balance');
-                    tx = await contract.methods.buyWithNative().send({ from: userAddress, value: weiAmount, gasPrice });
-                    logEvent('Buy Success', `Bought with ${paymentAmount} POL`, true, false, tx.transactionHash);
-                } else {
-                    const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
-                    const balance = await tokenContract.methods.balanceOf(userAddress).call();
-                    if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient token balance');
-                    const allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
-                    if (BigInt(allowance) < BigInt(weiAmount)) return showError('home', 'Insufficient allowance. Please approve first.');
-                    tx = await contract.methods.buyWithToken(paymentToken, weiAmount).send({ from: userAddress, gasPrice });
-                    const tokenInfo = await getTokenInfo(paymentToken);
-                    logEvent('Buy Success', `Bought with ${paymentAmount} ${tokenInfo.symbol}`, true, false, tx.transactionHash);
-                }
-                showTxStatus('home', `Success! Tx: ${tx.transactionHash}`);
-                await updateContractInfo();
-                await updateUserBalance();
-                await updatePaymentTokensTable();
-                await updateBuyBalance();
-            } catch (error) {
-                showTxStatus('home', '');
-                const message = error.message.includes('revert') ? 'Failed to secure funds' : error.message;
-                showError('home', message, error.transactionHash);
-            }
+function setupEventListeners() {
+    contract.events.allEvents({ fromBlock: 'latest' }, async (error, event) => {
+        if (error) {
+            console.error('Error on event', error);
+            return;
         }
+        const txHash = event.transactionHash;
+        const details = formatEventDetails(event);
+        logEvent(event.event, details, true, false, txHash);
+    });
+}
 
-        async function sendTokens() {
-            if (!contract) return showError('home', 'Please connect your wallet first!');
-            const recipient = document.getElementById('send-recipient').value.trim();
-            const amount = document.getElementById('send-amount').value;
-            if (!web3.utils.isAddress(recipient)) return showError('home', 'Invalid recipient address');
-            if (!amount || parseFloat(amount) <= 0) return showError('home', 'Invalid amount');
-            try {
-                showTxStatus('home', 'Pending...');
-                const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
-                const weiAmount = web3.utils.toWei(amount, 'ether');
-                const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
-                if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient sale token balance');
-                const gasPrice = await web3.eth.getGasPrice();
-                const tx = await saleTokenContract.methods.transfer(recipient, weiAmount).send({ from: userAddress, gasPrice });
-                showTxStatus('home', `Success! Tx: ${tx.transactionHash}`);
-                logEvent('Send Success', `Sent ${amount} ${saleTokenSymbol} to ${recipient}`, true, false, tx.transactionHash);
-                await updateUserBalance();
-            } catch (error) {
-                showTxStatus('home', '');
-                const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-                showError('home', message, error.transactionHash);
-            }
-        }
-
-        async function updateTokenReceiveInfo() {
-            const paymentToken = document.getElementById('payment-token-select').value;
-            const paymentAmount = document.getElementById('payment-amount').value;
-            const infoDiv = document.getElementById('token-receive-info');
-            if (!paymentToken || !paymentAmount || parseFloat(paymentAmount) <= 0) {
-                infoDiv.textContent = '';
-                return;
-            }
-            try {
-                const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-                if (!tokenInfo.isAccepted || tokenInfo.rate == 0) {
-                    infoDiv.textContent = 'Rate not set for this token';
-                    return;
-                }
-                const tokenAmount = (parseFloat(paymentAmount) * parseInt(tokenInfo.rate)).toFixed(2);
-                infoDiv.textContent = `You will receive approximately ${tokenAmount} ${saleTokenSymbol}`;
-            } catch (error) {
-                infoDiv.textContent = 'Error calculating token amount';
-            }
-        }
-
-        function setupEventListeners() {
-            contract.events.allEvents({ fromBlock: 'latest' }, async (error, event) => {
-                if (error) {
-                    console.error('Error on event', error);
-                    return;
-                }
-                const txHash = event.transactionHash;
-                const details = formatEventDetails(event);
-                logEvent(event.event, details, true, false, txHash);
-            });
-        }
-
-        function formatEventDetails(event) {
-            const rv = event.returnValues;
-            switch (event.event) {
-                case 'Approved': return `Approver: ${rv.approver}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}`;
-                case 'FundsSecured': return `Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
-                case 'MinBuyToRewardSet': return `Min Buy: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
-                case 'MinBuyToRewardRemoved': return `Min Buy Removed: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
-                case 'NotEligible': return `Buyer: ${rv.buyer}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}`;
-                case 'PaymentTokenAdded': return `Token: ${rv.paymentToken}`;
-                case 'PaymentTokenRemoved': return `Token: ${rv.paymentToken}`;
-                case 'RateSet': return `Token: ${rv.paymentToken}, Rate: ${rv.rate}`;
-                case 'RateRemoved': return `Token: ${rv.paymentToken}`;
-                case 'RewardGranted': return `Buyer: ${rv.buyer}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Reward: ${web3.utils.fromWei(rv.rewardAmount, 'ether')}`;
-                case 'RewardSet': return `Token: ${rv.paymentToken}, Reward: ${rv.reward}%`;
-                case 'RewardRemoved': return `Token: ${rv.paymentToken}`;
-                case 'TokenPurchased': return `Buyer: ${rv.buyer}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Payment Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
-                case 'Withdrawn': return `Token: ${rv.token}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}, Owner: ${rv.owner}`;
-                case 'Paused': return `Account: ${rv.account}`;
-                case 'Unpaused': return `Account: ${rv.account}`;
-                default: return 'Unknown event';
-            }
-        }
-    </script>
-</body>
-</html>
+function formatEventDetails(event) {
+    const rv = event.returnValues;
+    switch (event.event) {
+        case 'Approved': return `Approver: ${rv.approver}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}`;
+        case 'FundsSecured': return `Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
+        case 'MinBuyToRewardSet': return `Min Buy: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
+        case 'MinBuyToRewardRemoved': return `Min Buy Removed: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
+        case 'NotEligible': return `Buyer: ${rv.buyer}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}`;
+        case 'PaymentTokenAdded': return `Token: ${rv.paymentToken}`;
+        case 'PaymentTokenRemoved': return `Token: ${rv.paymentToken}`;
+        case 'RateSet': return `Token: ${rv.paymentToken}, Rate: ${rv.rate}`;
+        case 'RateRemoved': return `Token: ${rv.paymentToken}`;
+        case 'RewardGranted': return `Buyer: ${rv.buyer}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Reward: ${web3.utils.fromWei(rv.rewardAmount, 'ether')}`;
+        case 'RewardSet': return `Token: ${rv.paymentToken}, Reward: ${rv.reward}%`;
+        case 'RewardRemoved': return `Token: ${rv.paymentToken}`;
+        case 'TokenPurchased': return `Buyer: ${rv.buyer}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Payment Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
+        case 'Withdrawn': return `Token: ${rv.token}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}, Owner: ${rv.owner}`;
+        case 'Paused': return `Account: ${rv.account}`;
+        case 'Unpaused': return `Account: ${rv.account}`;
+        default: return 'Unknown event';
+    }
+}
