@@ -302,13 +302,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>Sale Status</td><td id="sale-status">Unknown</td></tr>
-          <tr><td>Contract Address</td><td id="contract-address">Connect First<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button></td></tr>
-          <tr><td>Sale Token</td><td id="sale-token">Connect First<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button></td></tr>
-          <tr><td>Total Unsold</td><td id="total-unsold">Connect First</td></tr>
-          <tr><td>Minimum Buy to Reward</td><td id="min-buy-to-reward">Connect First</td></tr>
-          <tr><td>Total Sold</td><td id="total-sold">Connect First</td></tr>
-          <tr><td>Total Rewarded</td><td id="total-rewarded">Connect First</td></tr>
+          <tr><td>Sale Status</td><td id="sale-status">Connect</td></tr>
+          <tr><td>Contract Address</td><td id="contract-address">Connect<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button></td></tr>
+          <tr><td>Sale Token</td><td id="sale-token">Connect<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button></td></tr>
+          <tr><td>Total Unsold</td><td id="total-unsold">Connect</td></tr>
+          <tr><td>Minimum Buy to Reward</td><td id="min-buy-to-reward">Connect</td></tr>
+          <tr><td>Total Sold</td><td id="total-sold">Connect</td></tr>
+          <tr><td>Total Rewarded</td><td id="total-rewarded">Connect</td></tr>
         </tbody>
       </table>
       <div>
@@ -562,7 +562,7 @@
     // Handle chain changes
     async function handleChainChanged(chainId) {
       console.log("Chain changed to:", chainId);
-      const networkName = chainId === AMOY_CHAIN_ID ? 'Polygon Amoy' : 'Unknown Network';
+      const networkName = chainId === AMOY_CHAIN_ID ? 'Polygon Amoy' : 'Polygon Amoy';
       document.getElementById('connected-network').innerHTML = `Connected Network: ${networkName}`;
       if (chainId !== AMOY_CHAIN_ID) {
         showError('home', "Please switch to Polygon Amoy network.");
