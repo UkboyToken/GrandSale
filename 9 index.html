@@ -904,7 +904,7 @@ async function updateContractInfo() {
   try {
     saleTokenAddress = await contract.methods.token().call();
     document.getElementById('add-sale-token-btn').style.display = 'inline-block';
-    const saleTokenContract = new web3.eth.Contract(ERC10ABI, saleTokenAddress);
+    const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
     const totalUnsold = await saleTokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
     const minBuyToReward = await contract.methods.minBuyToReward().call();
     const totalSold = await contract.methods.totalSold().call();
