@@ -771,9 +771,9 @@
 
         try {
             const chainId = await web3.eth.getChainId();
-            const networkName = chainId === 80002 ? 'Polygon Amoy' : 'Unknown Network';
+            const networkName = chainId === '0x13882' ? 'Polygon Amoy' : 'Unknown Network';
             
-            if (chainId !== 80002) {
+            if (chainId !== '0x13882') {
                 showError('home', "Please switch to Polygon Amoy (Chain ID: 80002)");
                 await switchToAmoy();
                 return;
