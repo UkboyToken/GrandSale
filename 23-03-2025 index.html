@@ -266,8 +266,6 @@
  <header>
  <h1>Grand Sale</h1>
  <div class="wallet-status" id="wallet-status">
- <button id="connect-wallet-btn" class="control-btn">Connect Wallet</button>
- <button id="switch-account-btn" class="control-btn" style="display: none;">Change Wallet</button>
  <button id="add-amoy-btn" class="control-btn">Add Amoy Network</button>
  <button id="add-sale-token-btn" class="control-btn" style="display: none;">Add Sale Token</button>
  <button id="add-payment-token-btn" class="control-btn" style="display: none;">Add Payment Token</button>
@@ -278,7 +276,8 @@
  <div id="wallet-info" style="display: none; width: 100%;">
  <p id="connected-address" class="wallet-connected"></p>
  <p id="connected-network"></p>
- <button id="disconnect-wallet-btn" class="control-btn">Disconnect</button>
+ <button id="switch-account-btn" class="control-btn" style="display: none;">Change Wallet</button>
+  <button id="connect-wallet-btn" class="control-btn">Connect Wallet</button><button id="disconnect-wallet-btn" class="control-btn">Disconnect</button>
  </div>
  <div id="wallet-instructions" class="wallet-instructions" style="display: none;"></div>
  </div>
@@ -1431,8 +1430,6 @@ function formatEventDetails(event) {
     switch (event.event) {
         case 'Approved': 
             return `Approver: ${rv.approver}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}`;
-        case 'FundsSecured': 
-            return `Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
         case 'MinBuyToRewardSet': 
             return `Min Buy: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
         case 'MinBuyToRewardRemoved': 
@@ -1456,7 +1453,7 @@ function formatEventDetails(event) {
         case 'TokenPurchased': 
             return `Buyer: ${rv.buyer}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Payment Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
         case 'Withdrawn': 
-            return `Token: ${rv.token}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}, Owner: ${rv.owner}`;
+            return `Token: ${rv.token}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')};
         case 'Paused': 
             return `Account: ${rv.account}`;
         case 'Unpaused': 
