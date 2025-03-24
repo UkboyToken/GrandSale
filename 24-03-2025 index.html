@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Sale</title>
+    <style>
+        <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
+    }
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    h1, h2, h3 {
+        color: #333;
+    }
+    .wallet-status {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+    }
+    .control-btn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .control-btn:hover {
+        background-color: #0056b3;
+    }
+    .wallet-connected {
+        cursor: pointer;
+        color: #007bff;
+    }
+    .wallet-instructions {
+        margin-top: 10px;
+        color: #666;
+    }
+    .section {
+        display: none;
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .section.active {
+        display: block;
+    }
+    .error-message {
+        color: red;
+        margin: 10px 0;
+    }
+    .tx-status {
+        color: green;
+        margin: 10px 0;
+    }
+    select, input[type="text"], input[type="number"] {
+        padding: 8px;
+        margin: 5px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .history {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .log-content {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .log-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .log-table th, .log-table td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    .log-table th {
+        background-color: #f8f8f8;
+    }
+    .event-success {
+        color: green;
+    }
+    .event-error {
+        color: red;
+    }
+    .copy-btn {
+        margin-left: 10px;
+        padding: 5px 10px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .copy-btn:hover {
+        background-color: #218838;
+    }
+</style>
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Grand Sale</h1>
+            <div class="wallet-status" id="wallet-status">
+                <button id="connect-wallet-btn" class="control-btn">Connect Wallet</button>
+                <button id="switch-account-btn" class="control-btn" style="display: none;">Change Wallet</button>
+                <button id="add-amoy-btn" class="control-btn">Add Amoy Network</button>
+                <button id="add-sale-token-btn" class="control-btn" style="display: none;">Add Sale Token</button>
+                <button id="add-payment-token-btn" class="control-btn" style="display: none;">Add Payment Token</button>
+                <select id="payment-token-to-metamask" style="display: none;">
+                    <option value="">Select Payment Token</option>
+                </select>
+                <button id="refresh-btn" class="control-btn">Refresh</button>
+                <div id="wallet-info" style="display: none; width: 100%;">
+                    <p id="connected-address" class="wallet-connected"></p>
+                    <p id="connected-network"></p>
+                    <button id="disconnect-wallet-btn" class="control-btn">Disconnect</button>
+                </div>
+                <div id="wallet-instructions" class="wallet-instructions" style="display: none;"></div>
+            </div>
+        </header>
+        <nav id="navigation">
+            <button id="home-btn" onclick="showSection('home')" style="display: none;">Home</button>
+            <button id="admin-btn" onclick="showSection('owner')" style="display: none;">Admin</button>
+        </nav>
+        <div id="home" class="section active">
+            <h2>Home</h2>
+            <div id="error-message" class="error-message"></div>
+            <div id="tx-status" class="tx-status"></div>
+            <p>Contract Address: <span id="contract-address"></span></p>
+            <p>Sale Token: <span id="sale-token"></span></p>
+            <p>Total Unsold: <span id="total-unsold">0</span> <span id="sale-token-symbol">Token</span></p>
+            <p>Minimum Buy to Reward: <span id="min-buy-to-reward">0</span> <span id="sale-token-symbol2">Token</span></p>
+            <p>Total Sold: <span id="total-sold">0</span> <span id="sale-token-symbol3">Token</span></p>
+            <p>Total Rewarded: <span id="total-rewarded">0</span> <span id="sale-token-symbol4">Token</span></p>
+            <p>Contract Status: <span id="contract-status">Unpaused</span></p>
+            <div id="buy-section">
+                <h3>Buy Tokens</h3>
+                <select id="payment-token"></select>
+                <input type="number" id="payment-amount" placeholder="Amount to pay" min="0" step="0.01">
+                <button id="buy-btn" class="control-btn">Buy</button>
+            </div>
+        </div>
+        <div id="owner" class="section">
+            <h2>Admin Panel</h2>
+            <div id="error-message" class="error-message"></div>
+            <div id="tx-status" class="tx-status"></div>
+            <div>
+                <h3>Add Payment Token</h3>
+                <input type="text" id="new-payment-token" placeholder="Token Address">
+                <input type="number" id="new-rate" placeholder="Rate (e.g., 100)" min="1">
+                <input type="number" id="new-reward" placeholder="Reward % (e.g., 10)" min="0" max="100">
+                <button id="add-payment-btn" class="control-btn">Add</button>
+            </div>
+            <div>
+                <h3>Manage Payment Tokens</h3>
+                <table id="payment-tokens-table">
+                    <thead>
+                        <tr>
+                            <th>Token</th>
+                            <th>Rate</th>
+                            <th>Reward</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payment-tokens-body"></tbody>
+                </table>
+            </div>
+            <div>
+                <h3>Set Minimum Buy to Reward</h3>
+                <input type="number" id="min-buy-to-reward-input" placeholder="Min Buy Amount" min="0" step="0.01">
+                <button id="set-min-buy-btn" class="control-btn">Set</button>
+            </div>
+            <div>
+                <h3>Withdraw Funds</h3>
+                <input type="text" id="withdraw-token" placeholder="Token Address (0x0 for POL)">
+                <input type="number" id="withdraw-amount" placeholder="Amount" min="0" step="0.01">
+                <button id="withdraw-btn" class="control-btn">Withdraw</button>
+            </div>
+            <div>
+                <h3>Pause/Unpause Contract</h3>
+                <button id="pause-btn" class="control-btn">Pause</button>
+                <button id="unpause-btn" class="control-btn">Unpause</button>
+            </div>
+        </div>
+        <div id="history" class="history">
+            <h3>History</h3>
+            <div class="log-content">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Event</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/web3@1.10.4/dist/web3.min.js"></script>
+<script>
+const CONTRACT_ADDRESS = "0x65ed5aa09d34959214bdbb8b634e486081447e36";
+const GrandSaleABI = [{"inputs":[{"internalType":"address","name":"_token","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"approver","type":"address"},{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Approved","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"uint256","name":"paymentAmount","type":"uint256"}],"name":"FundsSecured","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"minBuyToReward","type":"uint256"}],"name":"MinBuyToRewardRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"minBuyToReward","type":"uint256"}],"name":"MinBuyToRewardSet","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenAmount","type":"uint256"}],"name":"NotEligible","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"}],"name":"PaymentTokenAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"}],"name":"PaymentTokenRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"rate","type":"uint256"},{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"}],"name":"RateSet","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"paymentToken","type":"address"}],"name":"RateRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"rewardAmount","type":"uint256"}],"name":"RewardGranted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"},{"indexed":false,"internalType":"uint256","name":"reward","type":"uint256"}],"name":"RewardSet","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"paymentToken","type":"address"}],"name":"RewardRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"tokenAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"paymentAmount","type":"uint256"}],"name":"TokenPurchased","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"address","name":"owner","type":"address"}],"name":"Withdrawn","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"Paused","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"}],"name":"Unpaused","type":"event"},{"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"addPaymentToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"paymentToken","type":"address"},{"internalType":"uint256","name":"paymentAmount","type":"uint256"}],"name":"buyWithToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"buyWithNative","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"minBuyToReward","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"paymentTokens","outputs":[{"internalType":"bool","name":"isAccepted","type":"bool"},{"internalType":"uint256","name":"rate","type":"uint256"},{"internalType":"uint256","name":"reward","type":"uint256"},{"internalType":"uint256","name":"totalRaised","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"removeMinBuyToReward","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"removePaymentToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"removeRate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"paymentToken","type":"address"}],"name":"removeReward","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"saleToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_minBuyToReward","type":"uint256"}],"name":"setMinBuyToReward","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"paymentToken","type":"address"},{"internalType":"uint256","name":"rate","type":"uint256"}],"name":"setRate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"paymentToken","type":"address"},{"internalType":"uint256","name":"reward","type":"uint256"}],"name":"setReward","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"token","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalRewarded","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSold","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_tokenAddress","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"pause","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"unpause","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"stateMutability":"payable","type":"receive"}]
+;
+
+const ERC20ABI = [{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"type":"function"}];
+
+let web3, contract, userAddress, saleTokenAddress, ownerAddress, saleTokenSymbol = "Token";
+let tokenInfoMap = new Map();
+const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+// Initialize Web3 on page load
+async function initializeWeb3() {
+    if (typeof window.ethereum !== 'undefined') {
+        web3 = new Web3(window.ethereum);
+        try {
+            const accounts = await web3.eth.getAccounts();
+            if (accounts.length > 0) {
+                userAddress = accounts[0];
+                await initializeAfterConnect();
+            }
+        } catch (error) {
+            console.error('Error checking initial connection:', error);
+        }
+    } else {
+        showError('home', "Please install MetaMask!");
+        showWalletInstructions();
+    }
+}
+
+// Helper function to get token info
+async function getTokenInfo(tokenAddress) {
+    if (tokenAddress === NATIVE_TOKEN_ADDRESS) return { name: "Polygon", symbol: "POL", decimals: 18 };
+    if (tokenInfoMap.has(tokenAddress)) return tokenInfoMap.get(tokenAddress);
+    try {
+        const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
+        const name = await tokenContract.methods.name().call();
+        const symbol = await tokenContract.methods.symbol().call();
+        const decimals = await tokenContract.methods.decimals().call();
+        const info = { name, symbol, decimals };
+        tokenInfoMap.set(tokenAddress, info);
+        if (tokenAddress === saleTokenAddress) saleTokenSymbol = symbol;
+        return info;
+    } catch (error) {
+        console.error(`Error fetching token info for ${tokenAddress}:`, error);
+        return { name: "Unknown", symbol: "UNK", decimals: 18 };
+    }
+}
+
+// Helper function to fetch accepted payment tokens
+async function fetchAcceptedPaymentTokens() {
+    if (!contract) return [];
+    const acceptedTokens = new Set();
+    try {
+        const events = await contract.getPastEvents('PaymentTokenAdded', { fromBlock: 0, toBlock: 'latest' });
+        const removedEvents = await contract.getPastEvents('PaymentTokenRemoved', { fromBlock: 0, toBlock: 'latest' });
+        const removedTokens = new Set(removedEvents.map(e => e.returnValues.paymentToken));
+        for (const event of events) {
+            const tokenAddress = event.returnValues.paymentToken;
+            if (!removedTokens.has(tokenAddress)) {
+                const tokenInfo = await contract.methods.paymentTokens(tokenAddress).call();
+                if (tokenInfo.isAccepted) acceptedTokens.add(tokenAddress);
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching accepted tokens:', error);
+    }
+    return Array.from(acceptedTokens);
+}
+
+// Helper function to check if an event is related to the user's address
+function isUserRelatedEvent(event, userAddress) {
+    const rv = event.returnValues;
+    const userLower = userAddress.toLowerCase();
+    switch (event.event) {
+        case 'Approved': return rv.approver.toLowerCase() === userLower;
+        case 'FundsSecured': return rv.owner.toLowerCase() === userLower;
+        case 'NotEligible': return rv.buyer.toLowerCase() === userLower;
+        case 'RewardGranted': return rv.buyer.toLowerCase() === userLower;
+        case 'TokenPurchased': return rv.buyer.toLowerCase() === userLower;
+        case 'Withdrawn': return rv.owner.toLowerCase() === userLower;
+        case 'Paused': case 'Unpaused': return rv.account.toLowerCase() === userLower;
+        case 'PaymentTokenAdded': case 'PaymentTokenRemoved': case 'RateSet': case 'RateRemoved':
+        case 'RewardSet': case 'RewardRemoved': case 'MinBuyToRewardSet': case 'MinBuyToRewardRemoved':
+            return false; // Admin-only events
+        default: return false;
+    }
+}
+
+// Fetch and log historical events
+async function fetchAndLogHistoricalEvents() {
+    try {
+        const events = await contract.getPastEvents('allEvents', { fromBlock: 0, toBlock: 'latest' });
+        const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
+        for (const event of events) {
+            const isAdminEvent = ['PaymentTokenAdded', 'PaymentTokenRemoved', 'RateSet', 'RateRemoved', 'RewardSet', 'RewardRemoved', 'MinBuyToRewardSet', 'MinBuyToRewardRemoved', 'Withdrawn', 'Paused', 'Unpaused'].includes(event.event);
+            if (!isOwner && (isAdminEvent || !isUserRelatedEvent(event, userAddress))) continue;
+            const txHash = event.transactionHash;
+            const details = formatEventDetails(event);
+            const timestamp = await getTransactionTimestamp(txHash);
+            logEvent(event.event, details, true, isAdminEvent, txHash, timestamp);
+        }
+    } catch (error) {
+        console.error('Error fetching historical events:', error);
+    }
+}
+
+// Set up real-time event listeners
+function setupEventListeners() {
+    if (!contract) return;
+    contract.events.allEvents({ fromBlock: 'latest' }, async (error, event) => {
+        if (error) return console.error('Error on event', error);
+        const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
+        const txHash = event.transactionHash;
+        const details = formatEventDetails(event);
+        const isAdminEvent = ['PaymentTokenAdded', 'PaymentTokenRemoved', 'RateSet', 'RateRemoved', 'RewardSet', 'RewardRemoved', 'MinBuyToRewardSet', 'MinBuyToRewardRemoved', 'Withdrawn', 'Paused', 'Unpaused'].includes(event.event);
+        if (!isOwner && (isAdminEvent || !isUserRelatedEvent(event, userAddress))) return;
+        logEvent(event.event, details, true, isAdminEvent, txHash);
+    });
+}
+
+// Format event details
+function formatEventDetails(event) {
+    const rv = event.returnValues;
+    switch (event.event) {
+        case 'Approved': return `Approver: ${rv.approver}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}`;
+        case 'FundsSecured': return `Owner: ${rv.owner}, Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
+        case 'MinBuyToRewardSet': return `Min Buy: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
+        case 'MinBuyToRewardRemoved': return `Min Buy Removed: ${web3.utils.fromWei(rv.minBuyToReward, 'ether')}`;
+        case 'NotEligible': return `Buyer: ${rv.buyer}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}`;
+        case 'PaymentTokenAdded': return `Token: ${rv.paymentToken}`;
+        case 'PaymentTokenRemoved': return `Token: ${rv.paymentToken}`;
+        case 'RateSet': return `Token: ${rv.paymentToken}, Rate: ${rv.rate}`;
+        case 'RateRemoved': return `Token: ${rv.paymentToken}`;
+        case 'RewardGranted': return `Buyer: ${rv.buyer}, Token: ${rv.paymentToken}, Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Reward: ${web3.utils.fromWei(rv.rewardAmount, 'ether')}`;
+        case 'RewardSet': return `Token: ${rv.paymentToken}, Reward: ${rv.reward}%`;
+        case 'RewardRemoved': return `Token: ${rv.paymentToken}`;
+        case 'TokenPurchased': return `Buyer: ${rv.buyer}, Token Amount: ${web3.utils.fromWei(rv.tokenAmount, 'ether')}, Payment Amount: ${web3.utils.fromWei(rv.paymentAmount, 'ether')}`;
+        case 'Withdrawn': return `Token: ${rv.token}, Amount: ${web3.utils.fromWei(rv.amount, 'ether')}, Owner: ${rv.owner}`;
+        case 'Paused': case 'Unpaused': return `Account: ${rv.account}`;
+        default: return 'Unknown event';
+    }
+}
+
+// Log events
+function logEvent(eventName, details, isSuccess = true, isAdminEvent = false, txHash = null, timestamp = null) {
+    const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
+    if (!isOwner && isAdminEvent) return;
+    const logBody = document.getElementById('log-body');
+    const row = document.createElement('tr');
+    row.className = isSuccess ? 'event-success' : 'event-error';
+    const detailsCell = txHash ? `<a href="https://amoy.polygonscan.com/tx/${txHash}" target="_blank">${details}</a>` : details;
+    const time = timestamp || (txHash ? 'Pending...' : new Date().toLocaleString());
+    row.innerHTML = `<td>${time}</td><td>${eventName}</td><td>${detailsCell}</td>`;
+    logBody.insertBefore(row, logBody.firstChild);
+    if (txHash && !timestamp) getTransactionTimestamp(txHash).then(ts => row.cells[0].textContent = ts);
+}
+
+// Get transaction timestamp
+async function getTransactionTimestamp(txHash) {
+    const receipt = await web3.eth.getTransactionReceipt(txHash);
+    const block = await web3.eth.getBlock(receipt.blockNumber);
+    return new Date(block.timestamp * 1000).toLocaleString();
+}
+
+// Show error messages
+function showError(section, message, txHash = null) {
+    const errorDiv = document.querySelector(`#${section} #error-message`);
+    if (errorDiv) errorDiv.textContent = message;
+    logEvent('Error', message, false, section === 'owner', txHash);
+}
+
+// Show transaction status
+function showTxStatus(section, message) {
+    const statusDiv = document.querySelector(`#${section} #tx-status`);
+    if (statusDiv) statusDiv.innerHTML = message;
+}
+
+// Copy to clipboard
+function copyToClipboard(elementId) {
+    let text = elementId === 'contract-address' ? CONTRACT_ADDRESS : saleTokenAddress;
+    navigator.clipboard.writeText(text);
+    logEvent('Copy', `Copied ${elementId === 'contract-address' ? 'Contract Address' : 'Sale Token Address'} to clipboard`);
+}
+
+// Show section
+function showSection(sectionId) {
+    document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+    const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
+    document.getElementById('home-btn').style.display = isOwner && sectionId === 'owner' ? 'inline-block' : 'none';
+    document.getElementById('admin-btn').style.display = isOwner && sectionId === 'home' ? 'inline-block' : 'none';
+    logEvent('Section Changed', `Switched to ${sectionId}`, true, sectionId === 'owner');
+}
+
+// Update contract info
+async function updateContractInfo() {
+    if (!contract) return;
+    try {
+        saleTokenAddress = await contract.methods.token().call();
+        document.getElementById('add-sale-token-btn').style.display = 'inline-block';
+        const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
+        const totalUnsold = await saleTokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
+        const minBuyToReward = await contract.methods.minBuyToReward().call();
+        const totalSold = await contract.methods.totalSold().call();
+        const totalRewarded = await contract.methods.totalRewarded().call();
+        const paused = await contract.methods.paused().call();
+        const tokenInfo = await getTokenInfo(saleTokenAddress);
+        document.getElementById('sale-token').innerHTML = `${tokenInfo.symbol} (${saleTokenAddress})<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button>`;
+        document.getElementById('total-unsold').textContent = parseFloat(web3.utils.fromWei(totalUnsold, 'ether')).toFixed(2);
+        document.getElementById('min-buy-to-reward').textContent = parseFloat(web3.utils.fromWei(minBuyToReward, 'ether')).toFixed(2);
+        document.getElementById('total-sold').textContent = parseFloat(web3.utils.fromWei(totalSold, 'ether')).toFixed(2);
+        document.getElementById('total-rewarded').textContent = parseFloat(web3.utils.fromWei(totalRewarded, 'ether')).toFixed(2);
+        document.getElementById('contract-status').textContent = paused ? 'Paused' : 'Unpaused';
+        ['sale-token-symbol', 'sale-token-symbol2', 'sale-token-symbol3', 'sale-token-symbol4'].forEach(id => 
+            document.getElementById(id).textContent = tokenInfo.symbol
+        );
+    } catch (error) {
+        showError('home', "Error updating contract info: " + error.message);
+    }
+}
+
+// Connect wallet
+async function connectWallet() {
+    if (!window.ethereum) {
+        showError('home', "Please install MetaMask!");
+        showWalletInstructions();
+        return;
+    }
+    try {
+        web3 = new Web3(window.ethereum);
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        await initializeAfterConnect();
+    } catch (error) {
+        showError('home', "Failed to connect wallet: " + error.message);
+    }
+}
+
+// Add Amoy network
+async function addAmoyNetwork() {
+    try {
+        await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+                chainId: '0x13882',
+                chainName: 'Polygon Amoy',
+                rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+                nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+                blockExplorerUrls: ['https://amoy.polygonscan.com/']
+            }]
+        });
+        logEvent('Network Added', 'Amoy network added to MetaMask', true, true);
+    } catch (error) {
+        showError('home', "Failed to add Amoy network: " + error.message);
+    }
+}
+
+// Initialize after connect
+async function initializeAfterConnect() {
+    const accounts = await web3.eth.getAccounts();
+    userAddress = accounts[0];
+    const chainId = await web3.eth.getChainId();
+    const networkName = chainId === 80002 ? 'Polygon Amoy' : 'Unknown Network';
+    if (chainId !== 80002) await switchToAmoy();
+    contract = new web3.eth.Contract(GrandSaleABI, CONTRACT_ADDRESS);
+    ownerAddress = await contract.methods.owner().call();
+    document.getElementById('wallet-info').style.display = 'block';
+    document.getElementById('connected-address').innerHTML = `Connected Address: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+    document.getElementById('connected-address').onclick = () => { navigator.clipboard.writeText(userAddress); logEvent('Copy', 'Wallet address copied to clipboard'); };
+    document.getElementById('connected-network').innerHTML = `Connected Network: ${networkName}`;
+    document.getElementById('connect-wallet-btn').style.display = 'none';
+    document.getElementById('switch-account-btn').style.display = 'inline-block';
+    document.getElementById('disconnect-wallet-btn').style.display = 'inline-block';
+    document.getElementById('add-payment-token-btn').style.display = 'inline-block';
+    document.getElementById('contract-address').innerHTML = `${CONTRACT_ADDRESS}<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button>`;
+    document.getElementById('history').style.display = 'block';
+    const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
+    document.getElementById('home-btn').style.display = isOwner && document.getElementById('owner').classList.contains('active') ? 'inline-block' : 'none';
+    document.getElementById('admin-btn').style.display = isOwner && document.getElementById('home').classList.contains('active') ? 'inline-block' : 'none';
+    await updateContractInfo();
+    // Placeholder for updateAllDropdowns and updatePaymentTokensTable if implemented
+    await fetchAndLogHistoricalEvents();
+    setupEventListeners();
+    logEvent('Wallet Connected', `Connected to ${userAddress}`);
+}
+
+// Switch to Amoy
+async function switchToAmoy() {
+    try {
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x13882' }] });
+    } catch (switchError) {
+        if (switchError.code === 4902) await addAmoyNetwork();
+        else throw switchError;
+    }
+}
+
+// Show wallet instructions
+function showWalletInstructions() {
+    const instructions = document.getElementById('wallet-instructions');
+    instructions.style.display = 'block';
+    instructions.innerHTML = `<p>Please install MetaMask from <a href="https://metamask.io" target="_blank">metamask.io</a>.</p>`;
+}
+
+// Event listeners
+window.addEventListener('load', initializeWeb3);
+document.getElementById('connect-wallet-btn').addEventListener('click', connectWallet);
+document.getElementById('add-amoy-btn').addEventListener('click', addAmoyNetwork);
+// Add more event listeners as needed for buy-btn, add-payment-btn, etc.
+</script>
+</body>
+</html>
