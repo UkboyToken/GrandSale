@@ -881,39 +881,35 @@
     }
 
     async function initializeAfterConnect() {
-      console.log("Initializing after connect...");
-      const accounts = await web3.eth.getAccounts();
-      userAddress = accounts[0];
-      const chainId = await web3.eth.getChainId();
-      const networkName = chainId === 80002 ? 'Polygon Amoy' : 'Unknown Network';
-      if (chainId !== 80002) {
-        showError('home', "Please switch to Polygon Amoy (Chain ID: 80002)");
-        await switchToAmoy();
-        return;
-      }
-      contract = new web3.eth.Contract(GrandSaleABI, CONTRACT_ADDRESS);
-      ownerAddress = await contract.methods.owner().call();
-      document.getElementById('wallet-info').style.display = 'block';
-      document.getElementById('connected-address').innerHTML = `Connected Address: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
-      document.getElementById('connected-address').onclick = () => { navigator.clipboard.writeText(userAddress); logEvent('Copy', 'Wallet address copied'); };
-      document.getElementById('connected-network').innerHTML = `Connected Network: ${networkName}`;
-      document.getElementById('connect-wallet-btn').style.display = 'none';
-      document.getElementById('switch-account-btn').style.display = 'inline-block';
-      document.getElementById('disconnect-wallet-btn').style.display = 'inline-block';
-      document.getElementById('add-payment-token-btn').style.display = 'inline-block';
-      document.getElementById('contract-address').innerHTML = `${CONTRACT_ADDRESS}<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button>`;
-      document.getElementById('history').style.display = 'block';
-      const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
-      document.getElementById('home-btn').style.display = isOwner && document.getElementById('owner').classList.contains('active') ? 'inline-block' : 'none';
-      document.getElementById('admin-btn').style.display = isOwner && document.getElementById('home').classList.contains('active') ? 'inline-block' : 'none';
-      await updateContractInfo();
-      await updateAllDropdowns();
-      await updatePaymentTokensTable();
-      await updateUserBalance();
-      document.getElementById('log-body').innerHTML = '';
-      await fetchAndLogHistoricalEvents();
-      setupEventListeners();
-    }
+  const accounts = await web3.eth.getAccounts();
+  userAddress = accounts[0];
+  const chainId = await web3.eth.getChainId();
+  const networkName = chainId === 80002 ? 'Polygon Amoy' : 'Unknown Network';
+  if (chainId !== 80002) await switchToAmoy();
+  contract = new web3.eth.Contract(GrandSaleABI, CONTRACT_ADDRESS);
+  ownerAddress = await contract.methods.owner().call();
+  document.getElementById('wallet-info').style.display = 'block';
+  document.getElementById('connected-address').innerHTML = `Connected Address: ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+  document.getElementById('connected-address').onclick = () => { navigator.clipboard.writeText(userAddress); logEvent('Copy', 'Wallet address copied to clipboard'); };
+  document.getElementById('connected-network').innerHTML = `Connected Network: ${networkName}`;
+  document.getElementById('connect-wallet-btn').style.display = 'none';
+  document.getElementById('switch-account-btn').style.display = 'inline-block';
+  document.getElementById('disconnect-wallet-btn').style.display = 'inline-block';
+  document.getElementById('add-payment-token-btn').style.display = 'inline-block';
+  document.getElementById('contract-address').innerHTML = `${CONTRACT_ADDRESS}<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button>`;
+  document.getElementById('history').style.display = 'block';
+  const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
+  document.getElementById('home-btn').style.display = isOwner && document.getElementById('owner').classList.contains('active') ? 'inline-block' : 'none';
+  document.getElementById('admin-btn').style.display = isOwner && document.getElementById('home').classList.contains('active') ? 'inline-block' : 'none';
+  await updateContractInfo();
+  await updateAllDropdowns();
+  await updatePaymentTokensTable();
+  await updateUserBalance();
+  document.getElementById('log-body').innerHTML = '';
+  await fetchAndLogHistoricalEvents();
+  setupEventListeners();
+  logEvent('Wallet Connected', `Connected to ${userAddress}`);
+}
 
     function showWalletInstructions() {
       const instructions = document.getElementById('wallet-instructions');
