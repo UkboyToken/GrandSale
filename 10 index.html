@@ -711,9 +711,23 @@ async function connectWallet() {
   try {
     web3 = new Web3(window.ethereum);
     await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const accounts = await web3.eth.getAccounts();
+    userAddress = accounts[0];
+    const chainId = await web3.eth.getChainId();
+    if (chainId !== 80002) {
+      await switchToAmoy();
+      return; // Wait for user to switch
+    }
     await initializeAfterConnect();
+    logEvent('Wallet Connected', `Connected to ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`);
   } catch (error) {
-    showError('home', "Failed to connect wallet: " + error.message);
+    if (error.code === 4001) {
+      showError('home', "Connection rejected by user.");
+    } else if (error.code === -32002) {
+      showError('home', "Request already pending in MetaMask. Please check your wallet.");
+    } else {
+      showError('home', "Failed to connect wallet: " + error.message);
+    }
   }
 }
 
