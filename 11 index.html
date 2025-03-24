@@ -585,51 +585,51 @@
     }
 
     async function connectWallet() {
-        console.log("Connecting wallet...");
-        if (!window.ethereum) {
-            showError('home', "Please install MetaMask!");
-            showWalletInstructions();
+    console.log("Connecting wallet...");
+    if (!window.ethereum) {
+        showError('home', "Please install MetaMask!");
+        showWalletInstructions();
+        return;
+    }
+
+    try {
+        const accounts = await window.ethereum.request({ 
+            method: 'eth_requestAccounts',
+            timeout: 10000 
+        }).catch(async (err) => {
+            if (err.code === -32002) {
+                throw new Error("Request already pending in MetaMask. Please check your wallet.");
+            }
+            throw err;
+        });
+
+        if (!accounts || accounts.length === 0) {
+            throw new Error("No accounts returned from MetaMask.");
+        }
+
+        web3 = new Web3(window.ethereum);
+        userAddress = accounts[0];
+        const chainId = await web3.eth.getChainId();
+
+        if (chainId !== AMOY_CHAIN_ID) {
+            console.log("Switching to Polygon Amoy...");
+            await switchToAmoy();
             return;
         }
 
-        try {
-            const accounts = await window.ethereum.request({ 
-                method: 'eth_requestAccounts',
-                timeout: 10000 
-            }).catch(async (err) => {
-                if (err.code === -32002) {
-                    throw new Error("Request already pending in MetaMask. Please check your wallet.");
-                }
-                throw err;
-            });
-
-            if (!accounts || accounts.length === 0) {
-                throw new Error("No accounts returned from MetaMask.");
-            }
-
-            web3 = new Web3(window.ethereum);
-            userAddress = accounts[0];
-            const chainId = await web3.eth.getChainId();
-
-            if (chainId !== 80002) {
-                console.log("Switching to Polygon Amoy...");
-                await switchToAmoy();
-                return;
-            }
-
-            await initializeAfterConnect();
-            logEvent('Wallet Connected', `Connected to ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`);
-        } catch (error) {
-            console.error("Wallet connection error:", error);
-            if (error.code === 4001) {
-                showError('home', "Connection rejected by user.");
-            } else if (error.code === -32002) {
-                showError('home', error.message);
-            } else {
-                showError('home', "Failed to connect wallet: " + (error.message || "Unknown error"));
-            }
+        await initializeAfterConnect();
+        logEvent('Wallet Connected', `Connected to ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`);
+    } catch (error) {
+        console.error("Wallet connection error:", error);
+        if (error.code === 4001) {
+            showError('home', "Connection rejected by user.");
+        } else if (error.code === -32002) {
+            showError('home', error.message);
+        } else {
+            showError('home', "Failed to connect wallet: " + (error.message || "Unknown error"));
         }
     }
+}
 
     async function switchAccount() {
         try {
@@ -771,9 +771,9 @@
 
         try {
             const chainId = await web3.eth.getChainId();
-            const networkName = chainId === '0x13882' ? 'Polygon Amoy' : 'Unknown Network';
+            const networkName = chainId === AMOY_CHAIN_ID ? 'Polygon Amoy' : 'Unknown Network';
             
-            if (chainId !== '0x13882') {
+            if (chainId !== AMOY_CHAIN_ID) {
                 showError('home', "Please switch to Polygon Amoy (Chain ID: 80002)");
                 await switchToAmoy();
                 return;
