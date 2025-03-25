@@ -1506,49 +1506,56 @@ async function updateTokenReceiveInfo() {
   const infoDiv = document.getElementById('token-receive-info');
   infoDiv.textContent = '';
   const approveSection = document.getElementById('approve-section');
+  approveSection.classList.remove('active');
+
   if (!contract || !tokenAddress || !amountInput || isNaN(amountInput) || parseFloat(amountInput) <= 0) {
-    approveSection.classList.remove('active');
     return;
   }
+
   try {
-    const tokenInfo = await getTokenInfo(tokenAddress);
+    // Get payment token decimals
+    const paymentTokenInfo = await getTokenInfo(tokenAddress);
+    const paymentDecimals = Number(paymentTokenInfo.decimals); // e.g., 18 for POL or custom for ERC20
+    const paymentAmount = parseFloat(amountInput);
+    const amountInWei = paymentAmount * (10 ** paymentDecimals); // Convert to smallest unit
+
+    // Get sale token decimals
+    const saleTokenInfo = await getTokenInfo(saleTokenAddress);
+    const saleDecimals = Number(saleTokenInfo.decimals); // Dynamic sale token decimals
+
+    // Fetch payment token data from contract
     const paymentTokenData = await contract.methods.paymentTokens(tokenAddress).call();
-    const rate = parseFloat(paymentTokenData.rate);
+    const rate = Number(paymentTokenData.rate); // Convert string to Number
     if (rate === 0) {
       infoDiv.textContent = 'No rate set for this token.';
-      approveSection.classList.remove('active');
       return;
     }
-    const paymentAmount = parseFloat(amountInput);
-    const paymentDecimals = tokenInfo.decimals;
-    const paymentInWei = paymentAmount * (10 ** paymentDecimals);
-    const tokenAmountInWei = (paymentInWei * rate) / (10 ** 18);
-    const saleTokenInfo = await getTokenInfo(saleTokenAddress);
-    const saleDecimals = saleTokenInfo.decimals;
-    const tokenAmount = tokenAmountInWei / (10 ** saleDecimals);
-    const rewardPercent = parseFloat(paymentTokenData.reward);
+
+    // Calculate token amount (rate is in sale token wei per payment token wei)
+    const tokenAmountInWei = (amountInWei * rate) / (10 ** paymentDecimals); // Normalize to sale token wei
+    const tokenAmount = tokenAmountInWei / (10 ** saleDecimals); // Convert to human-readable
+
+    const rewardPercent = Number(paymentTokenData.reward); // Convert string to Number
     const rewardAmount = rewardPercent > 0 ? (tokenAmount * rewardPercent) / 100 : 0;
     const totalReceive = tokenAmount + rewardAmount;
 
+    // Display with 2 decimal places
     infoDiv.textContent = `You will receive: ${totalReceive.toFixed(2)} ${saleTokenSymbol} (${tokenAmount.toFixed(2)} + ${rewardAmount.toFixed(2)} reward)`;
 
+    // Check allowance for ERC20 tokens
     if (tokenAddress !== NATIVE_TOKEN_ADDRESS) {
       const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
-      const weiAmount = paymentAmount * (10 ** paymentDecimals);
       const allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
-      if (parseFloat(allowance) < weiAmount) {
+      const allowanceNum = Number(web3.utils.fromWei(allowance, 'ether')); // Convert to human-readable
+      if (allowanceNum < paymentAmount) {
         approveSection.classList.add('active');
-      } else {
-        approveSection.classList.remove('active');
       }
-    } else {
-      approveSection.classList.remove('active');
     }
   } catch (error) {
     showError('home', "Error calculating token receive amount: " + error.message);
-    approveSection.classList.remove('active');
   }
 }
+
 async function approveToken() {
   if (!contract) return showError('home', 'Please connect your wallet first!');
   const tokenAddress = document.getElementById('approve-token-select').value;
