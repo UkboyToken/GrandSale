@@ -428,7 +428,7 @@
       </div>
       <div class="control-group">
         <h3>Contract Status</h3>
-        <p>Status: <span id="contract-status">Unknown</span></p>
+        <p>Status: <span id="contract-status">Connect</span></p>
         <button id="toggle-pause-btn" class="control-btn" onclick="togglePause()">Toggle Pause</button>
       </div>
       <div class="control-group">
@@ -772,12 +772,12 @@
       document.getElementById('home-btn').style.display = 'none';
       document.getElementById('admin-btn').style.display = 'none';
       document.getElementById('history').style.display = 'none';
-      document.getElementById('contract-address').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'contract-address\')">Copy</button>';
-      document.getElementById('sale-token').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'sale-token\')">Copy</button>';
-      document.getElementById('total-unsold').textContent = 'Connect First';
-      document.getElementById('min-buy-to-reward').textContent = 'Connect First';
-      document.getElementById('total-sold').textContent = 'Connect First';
-      document.getElementById('total-rewarded').textContent = 'Connect First';
+      document.getElementById('contract-address').innerHTML = 'Connect<button class="copy-btn" onclick="copyToClipboard(\'contract-address\')">Copy</button>';
+      document.getElementById('sale-token').innerHTML = 'Connect<button class="copy-btn" onclick="copyToClipboard(\'sale-token\')">Copy</button>';
+      document.getElementById('total-unsold').textContent = 'Connect';
+      document.getElementById('min-buy-to-reward').textContent = 'Connect';
+      document.getElementById('total-sold').textContent = 'Connect';
+      document.getElementById('total-rewarded').textContent = 'Connect';
       document.getElementById('payment-tokens-body').innerHTML = '';
       document.getElementById('contract-status').textContent = 'Unknown';
       document.getElementById('sale-status').textContent = 'Unknown';
@@ -884,7 +884,7 @@
   const accounts = await web3.eth.getAccounts();
   userAddress = accounts[0];
   const chainId = await web3.eth.getChainId();
-  const networkName = chainId === 80002 ? 'Polygon Amoy' : 'Unknown Network';
+  const networkName = chainId === 80002 ? 'Polygon Amoy' : 'Polygon Amoy';
   if (chainId !== 80002) await switchToAmoy();
   contract = new web3.eth.Contract(GrandSaleABI, CONTRACT_ADDRESS);
   ownerAddress = await contract.methods.owner().call();
