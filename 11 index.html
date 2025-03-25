@@ -649,30 +649,31 @@
       }
     }
 
-    async function fetchAndLogHistoricalEvents() {
-      try {
-        const events = await contract.getPastEvents('allEvents', { fromBlock: 0, toBlock: 'latest' });
-        const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
-        for (const event of events) {
-          if (event.event === 'FundsSecured') continue;
-          const isAdminEvent = ['PaymentTokenAdded', 'PaymentTokenRemoved', 'RateSet', 'RateRemoved', 'RewardSet', 'RewardRemoved', 'MinBuyToRewardSet', 'MinBuyToRewardRemoved', 'Withdrawn', 'Paused', 'Unpaused'].includes(event.event);
-          if (!isOwner && isAdminEvent) continue;
-          const rv = event.returnValues;
-          if (!isAdminEvent) {
-            if (event.event === 'Approved' && rv.approver.toLowerCase() !== userAddress.toLowerCase()) continue;
-            if (event.event === 'NotEligible' && rv.buyer.toLowerCase() !== userAddress.toLowerCase()) continue;
-            if (event.event === 'RewardGranted' && rv.buyer.toLowerCase() !== userAddress.toLowerCase()) continue;
-            if (event.event === 'TokenPurchased' && rv.buyer.toLowerCase() !== userAddress.toLowerCase()) continue;
-          }
-          const txHash = event.transactionHash;
-          const details = await formatEventDetails(event);
-          const timestamp = await getTransactionTimestamp(txHash);
-          logEvent(event.event, details, true, isAdminEvent, txHash, timestamp);
-        }
-      } catch (error) {
-        console.error('Error fetching historical events:', error);
+    // Updated fetchAndLogHistoricalEvents to fetch block timestamps
+async function fetchAndLogHistoricalEvents() {
+  try {
+    const events = await contract.getPastEvents('allEvents', { fromBlock: 0, toBlock: 'latest' });
+    const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
+    for (const event of events) {
+      if (event.event === 'FundsSecured') continue;
+      const isAdminEvent = ['PaymentTokenAdded', 'PaymentTokenRemoved', 'RateSet', 'RateRemoved', 'RewardSet', 'RewardRemoved', 'MinBuyToRewardSet', 'MinBuyToRewardRemoved', 'Withdrawn', 'Paused', 'Unpaused'].includes(event.event);
+      if (!isOwner && isAdminEvent) continue;
+      const rv = event.returnValues;
+      if (!isAdminEvent) {
+        if (event.event === 'Approved' && rv.approver.toLowerCase() !== userAddress.toLowerCase()) continue;
+        if (event.event === 'NotEligible' && rv.buyer.toLowerCase() !== userAddress.toLowerCase()) continue;
+        if (event.event === 'RewardGranted' && rv.buyer.toLowerCase() !== userAddress.toLowerCase()) continue;
+        if (event.event === 'TokenPurchased' && rv.buyer.toLowerCase() !== userAddress.toLowerCase()) continue;
       }
+      const txHash = event.transactionHash;
+      const details = formatEventDetails(event);
+      const timestamp = await getTransactionTimestamp(txHash); // Fetch block timestamp upfront
+      logEvent(event.event, details, true, isAdminEvent, txHash, timestamp);
     }
+  } catch (error) {
+    console.error('Error fetching historical events:', error);
+  }
+}
 
     function showError(section, message, txHash = null) {
       const errorDiv = document.querySelector(`#${section} #error-message`);
@@ -685,35 +686,37 @@
       if (statusDiv) statusDiv.innerHTML = message;
     }
 
-    async function getTransactionTimestamp(txHash) {
+    // Updated to return formatted block timestamp
+async function getTransactionTimestamp(txHash) {
   try {
     const receipt = await web3.eth.getTransactionReceipt(txHash);
     const block = await web3.eth.getBlock(receipt.blockNumber);
-    return new Date(block.timestamp * 1000).toLocaleString();
+    return new Date(block.timestamp * 1000).toLocaleString('en-US', { timeZone: 'UTC' }); // UTC for consistency
   } catch (error) {
     console.error(`Error fetching timestamp for tx ${txHash}:`, error);
-    return new Date().toLocaleString();
+    return 'Unknown'; // Fallback if block data unavailable
   }
 }
 
-    function logEvent(eventName, details, isSuccess = true, isAdminEvent = false, txHash = null, timestamp = null) {
-      const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
-      if (!isOwner && isAdminEvent) return;
-      const logBody = document.getElementById('log-body');
-      const row = document.createElement('tr');
-      row.className = isSuccess ? 'event-success' : 'event-error';
-      const detailsCell = txHash 
-        ? `<a href="https://amoy.polygonscan.com/tx/${txHash}" target="_blank">${details}</a>`
-        : details;
-      const time = timestamp || (txHash ? 'Pending...' : new Date().toLocaleString());
-      row.innerHTML = `<td>${time}</td><td>${eventName}</td><td>${detailsCell}</td>`;
-      logBody.insertBefore(row, logBody.firstChild);
-      if (txHash && !timestamp) {
-        getTransactionTimestamp(txHash).then(ts => {
-          row.cells[0].textContent = ts;
-        });
-      }
-    }
+// Updated logEvent to use block timestamp
+function logEvent(eventName, details, isSuccess = true, isAdminEvent = false, txHash = null, blockTimestamp = null) {
+  const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
+  if (!isOwner && isAdminEvent) return;
+  const logBody = document.getElementById('log-body');
+  const row = document.createElement('tr');
+  row.className = isSuccess ? 'event-success' : 'event-error';
+  const detailsCell = txHash 
+    ? `<a href="https://amoy.polygonscan.com/tx/${txHash}" target="_blank">${details}</a>`
+    : details;
+  const time = blockTimestamp || (txHash ? 'Pending...' : 'N/A'); // No local time fallback
+  row.innerHTML = `<td>${time}</td><td>${eventName}</td><td>${detailsCell}</td>`;
+  logBody.insertBefore(row, logBody.firstChild);
+  if (txHash && !blockTimestamp) {
+    getTransactionTimestamp(txHash).then(ts => {
+      row.cells[0].textContent = ts;
+    });
+  }
+}
 
     // Event Listeners for Buttons
     document.getElementById('connect-wallet-btn').addEventListener('click', connectWallet);
@@ -1093,32 +1096,41 @@
     }
 
     async function updateWithdrawDropdown() {
-  if (!contract) return;
-  try {
-    const select = document.getElementById('withdraw-token');
-    select.innerHTML = '<option value="">Select Token to Withdraw</option>';
-    const acceptedTokens = await fetchAcceptedPaymentTokens();
-    const tokens = new Set([NATIVE_TOKEN_ADDRESS, saleTokenAddress, ...acceptedTokens]);
-    for (const address of tokens) {
-      let balance;
-      if (address === NATIVE_TOKEN_ADDRESS) balance = await web3.eth.getBalance(CONTRACT_ADDRESS);
-      else {
-        const tokenContract = new web3.eth.Contract(ERC20ABI, address);
-        balance = await tokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
-      }
-      const balanceNum = parseFloat(balance);
-      if (balanceNum > 0) {
-        const info = await getTokenInfo(address);
-        const balanceUnits = balanceNum / (10 ** info.decimals); // Direct division
-        const option = document.createElement('option');
-        option.value = address;
-        option.textContent = `${info.name} (${info.symbol}) - Balance: ${balanceUnits.toFixed(2)}`;
-        select.appendChild(option);
-      }
+    if (!contract) return;
+    try {
+        const select = document.getElementById('withdraw-token');
+        select.innerHTML = '<option value="">Select Token to Withdraw</option>';
+
+        // Base set of tokens to check: native POL, sale token, and accepted payment tokens
+        const acceptedTokens = await fetchAcceptedPaymentTokens();
+        const tokens = new Set([NATIVE_TOKEN_ADDRESS, saleTokenAddress, ...acceptedTokens]);
+
+        for (const address of tokens) {
+            let balance;
+            if (address === NATIVE_TOKEN_ADDRESS) {
+                balance = await web3.eth.getBalance(CONTRACT_ADDRESS);
+            } else {
+                const tokenContract = new web3.eth.Contract(ERC20ABI, address);
+                try {
+                    balance = await tokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
+                } catch (e) {
+                    console.warn(`Skipping invalid token contract at ${address}:`, e.message);
+                    continue; // Skip if not a valid ERC20 token
+                }
+            }
+            const balanceNum = Number(balance); // Web3.js v4 returns strings
+            if (balanceNum > 0) {
+                const info = await getTokenInfo(address);
+                const balanceUnits = balanceNum / (10 ** Number(info.decimals));
+                const option = document.createElement('option');
+                option.value = address;
+                option.textContent = `${info.name} (${info.symbol}) - Balance: ${balanceUnits.toFixed(2)}`;
+                select.appendChild(option);
+            }
+        }
+    } catch (error) {
+        showError('owner', "Error updating withdraw dropdown: " + error.message);
     }
-  } catch (error) {
-    showError('owner', "Error updating withdraw dropdown: " + error.message);
-  }
 }
 
     async function updateAllDropdowns() {
