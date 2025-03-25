@@ -671,15 +671,15 @@
     }
 
     async function getTransactionTimestamp(txHash) {
-      try {
-        const receipt = await web3.eth.getTransactionReceipt(txHash);
-        const block = await web3.eth.getBlock(receipt.blockNumber);
-        return new Date(block.timestamp * 1000).toLocaleString();
-      } catch (error) {
-        console.error(`Error fetching timestamp for tx ${txHash}:`, error);
-        return new Date().toLocaleString();
-      }
-    }
+  try {
+    const receipt = await web3.eth.getTransactionReceipt(txHash);
+    const block = await web3.eth.getBlock(receipt.blockNumber);
+    return new Date(block.timestamp * 1000).toLocaleString();
+  } catch (error) {
+    console.error(`Error fetching timestamp for tx ${txHash}:`, error);
+    return new Date().toLocaleString();
+  }
+}
 
     function logEvent(eventName, details, isSuccess = true, isAdminEvent = false, txHash = null, timestamp = null) {
       const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
