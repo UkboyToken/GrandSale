@@ -527,14 +527,6 @@
     let tokenInfoMap = new Map();
     const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
     const AMOY_CHAIN_ID = '0x13882'; // Polygon Amoy Testnet
-    
-    function fromTokenWeiToUnits(weiAmount, decimals) {
-  const divisor = BigInt(10 ** decimals);
-  const integerPart = BigInt(weiAmount) / divisor;
-  const fractionalPart = BigInt(weiAmount) % divisor;
-  const fractionalStr = fractionalPart.toString().padStart(decimals, '0').replace(/0+$/, '');
-  return fractionalStr ? `${integerPart}.${fractionalStr}` : integerPart.toString();
-}
 
     // Initialize Web3 on page load
     async function initializeWeb3() {
@@ -1106,12 +1098,13 @@
         const tokenContract = new web3.eth.Contract(ERC20ABI, address);
         balance = await tokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
       }
-      if (BigInt(balance) > 0) {
+      const balanceNum = parseFloat(balance);
+      if (balanceNum > 0) {
         const info = await getTokenInfo(address);
-        const balanceUnits = fromTokenWeiToUnits(balance, info.decimals); // Use correct decimals (defined in Fix 4)
+        const balanceUnits = balanceNum / (10 ** info.decimals); // Direct division
         const option = document.createElement('option');
         option.value = address;
-        option.textContent = `${info.name} (${info.symbol}) - Balance: ${parseFloat(balanceUnits).toFixed(2)}`;
+        option.textContent = `${info.name} (${info.symbol}) - Balance: ${balanceUnits.toFixed(2)}`;
         select.appendChild(option);
       }
     }
@@ -1504,61 +1497,50 @@ async function updateTokenReceiveInfo() {
   const amountInput = document.getElementById('payment-amount').value;
   const infoDiv = document.getElementById('token-receive-info');
   infoDiv.textContent = '';
-  if (!contract) {
-    document.getElementById('approve-section').classList.remove('active');
-    return;
-  }
-  if (await contract.methods.paused().call()) {
-    infoDiv.textContent = 'Sale is Paused';
-    document.getElementById('approve-section').classList.remove('active');
-    return;
-  }
-  if (!tokenAddress || !amountInput || isNaN(amountInput) || amountInput <= 0) {
-    document.getElementById('approve-section').classList.remove('active');
+  const approveSection = document.getElementById('approve-section');
+  if (!contract || !tokenAddress || !amountInput || isNaN(amountInput) || parseFloat(amountInput) <= 0) {
+    approveSection.classList.remove('active');
     return;
   }
   try {
     const tokenInfo = await getTokenInfo(tokenAddress);
-    const saleTokenInfo = await getTokenInfo(saleTokenAddress);
     const paymentTokenData = await contract.methods.paymentTokens(tokenAddress).call();
-    const rate = BigInt(paymentTokenData.rate);
-    if (rate === 0n) {
+    const rate = parseFloat(paymentTokenData.rate);
+    if (rate === 0) {
       infoDiv.textContent = 'No rate set for this token.';
+      approveSection.classList.remove('active');
       return;
     }
+    const paymentAmount = parseFloat(amountInput);
     const paymentDecimals = tokenInfo.decimals;
+    const paymentInWei = paymentAmount * (10 ** paymentDecimals);
+    const tokenAmountInWei = (paymentInWei * rate) / (10 ** 18);
+    const saleTokenInfo = await getTokenInfo(saleTokenAddress);
     const saleDecimals = saleTokenInfo.decimals;
-    // Convert payment amount to wei based on its decimals
-    const paymentAmountWei = BigInt(Math.round(parseFloat(amountInput) * (10 ** paymentDecimals)));
-    // Calculate token amount in wei: rate is a multiplier normalized by 1e18
-    const tokenAmountWei = (paymentAmountWei * rate) / BigInt(10 ** 18);
-    // Convert to sale token units
-    const tokenAmount = parseFloat(fromTokenWeiToUnits(tokenAmountWei, saleDecimals));
-    const rewardPercent = BigInt(paymentTokenData.reward);
-    // Calculate reward in wei, then convert to units
-    const rewardAmountWei = rewardPercent > 0n ? (tokenAmountWei * rewardPercent) / BigInt(100) : 0n;
-    const rewardAmount = parseFloat(fromTokenWeiToUnits(rewardAmountWei, saleDecimals));
+    const tokenAmount = tokenAmountInWei / (10 ** saleDecimals);
+    const rewardPercent = parseFloat(paymentTokenData.reward);
+    const rewardAmount = rewardPercent > 0 ? (tokenAmount * rewardPercent) / 100 : 0;
     const totalReceive = tokenAmount + rewardAmount;
 
     infoDiv.textContent = `You will receive: ${totalReceive.toFixed(2)} ${saleTokenSymbol} (${tokenAmount.toFixed(2)} + ${rewardAmount.toFixed(2)} reward)`;
 
     if (tokenAddress !== NATIVE_TOKEN_ADDRESS) {
       const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
-      const amountWei = BigInt(Math.round(parseFloat(amountInput) * (10 ** paymentDecimals))); // Match decimals
+      const weiAmount = paymentAmount * (10 ** paymentDecimals);
       const allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
-      if (BigInt(allowance) < amountWei) {
-        document.getElementById('approve-section').classList.add('active');
+      if (parseFloat(allowance) < weiAmount) {
+        approveSection.classList.add('active');
       } else {
-        document.getElementById('approve-section').classList.remove('active');
+        approveSection.classList.remove('active');
       }
     } else {
-      document.getElementById('approve-section').classList.remove('active');
+      approveSection.classList.remove('active');
     }
   } catch (error) {
     showError('home', "Error calculating token receive amount: " + error.message);
+    approveSection.classList.remove('active');
   }
 }
-
 async function approveToken() {
   if (!contract) return showError('home', 'Please connect your wallet first!');
   const tokenAddress = document.getElementById('approve-token-select').value;
@@ -1647,25 +1629,27 @@ async function formatEventDetails(event) {
   switch (event.event) {
     case 'Approved': {
       const tokenInfo = await getTokenInfo(rv.paymentToken);
-      const amountUnits = fromTokenWeiToUnits(rv.amount, tokenInfo.decimals);
-      return `Approver: ${rv.approver}, Token: ${tokenInfo.symbol}, Amount: ${parseFloat(amountUnits).toFixed(2)}`;
+      const amountUnits = parseFloat(rv.amount) / (10 ** tokenInfo.decimals);
+      return `Approver: ${rv.approver}, Token: ${tokenInfo.symbol}, Amount: ${amountUnits.toFixed(2)}`;
     }
     case 'FundsSecured': {
-      const amountUnits = fromTokenWeiToUnits(rv.paymentAmount, 18); // Assuming native token
-      return `Owner: ${rv.owner}, Amount: ${parseFloat(amountUnits).toFixed(2)} POL`;
+      const amountUnits = parseFloat(rv.paymentAmount) / (10 ** 18); // Native token
+      return `Owner: ${rv.owner}, Amount: ${amountUnits.toFixed(2)} POL`;
     }
     case 'MinBuyToRewardSet': {
-      const amountUnits = fromTokenWeiToUnits(rv.minBuyToReward, (await getTokenInfo(saleTokenAddress)).decimals);
-      return `Min Buy: ${parseFloat(amountUnits).toFixed(2)} ${saleTokenSymbol}`;
+      const saleTokenInfo = await getTokenInfo(saleTokenAddress);
+      const amountUnits = parseFloat(rv.minBuyToReward) / (10 ** saleTokenInfo.decimals);
+      return `Min Buy: ${amountUnits.toFixed(2)} ${saleTokenSymbol}`;
     }
     case 'MinBuyToRewardRemoved': {
-      const amountUnits = fromTokenWeiToUnits(rv.minBuyToReward, (await getTokenInfo(saleTokenAddress)).decimals);
-      return `Min Buy Removed: ${parseFloat(amountUnits).toFixed(2)} ${saleTokenSymbol}`;
+      const saleTokenInfo = await getTokenInfo(saleTokenAddress);
+      const amountUnits = parseFloat(rv.minBuyToReward) / (10 ** saleTokenInfo.decimals);
+      return `Min Buy Removed: ${amountUnits.toFixed(2)} ${saleTokenSymbol}`;
     }
     case 'NotEligible': {
       const saleTokenInfo = await getTokenInfo(saleTokenAddress);
-      const tokenAmountUnits = fromTokenWeiToUnits(rv.tokenAmount, saleTokenInfo.decimals);
-      return `Your purchase of ${parseFloat(tokenAmountUnits).toFixed(2)} ${saleTokenInfo.symbol} got 0 reward`;
+      const tokenAmountUnits = parseFloat(rv.tokenAmount) / (10 ** saleTokenInfo.decimals);
+      return `Your purchase of ${tokenAmountUnits.toFixed(2)} ${saleTokenInfo.symbol} got 0 reward`;
     }
     case 'PaymentTokenAdded': {
       const tokenInfo = await getTokenInfo(rv.paymentToken);
@@ -1685,8 +1669,8 @@ async function formatEventDetails(event) {
     }
     case 'RewardGranted': {
       const saleTokenInfo = await getTokenInfo(saleTokenAddress);
-      const rewardAmountUnits = fromTokenWeiToUnits(rv.rewardAmount, saleTokenInfo.decimals);
-      return `You got ${parseFloat(rewardAmountUnits).toFixed(2)} ${saleTokenInfo.symbol} in Reward`;
+      const rewardAmountUnits = parseFloat(rv.rewardAmount) / (10 ** saleTokenInfo.decimals);
+      return `You got ${rewardAmountUnits.toFixed(2)} ${saleTokenInfo.symbol} in Reward`;
     }
     case 'RewardSet': {
       const tokenInfo = await getTokenInfo(rv.paymentToken);
@@ -1697,14 +1681,14 @@ async function formatEventDetails(event) {
       return `Token: ${tokenInfo.symbol}`;
     }
     case 'TokenPurchased': {
-  const saleTokenInfo = await getTokenInfo(saleTokenAddress);
-  const tokenAmountUnits = fromTokenWeiToUnits(rv.tokenAmount, saleTokenInfo.decimals);
-  return `You bought ${parseFloat(tokenAmountUnits).toFixed(2)} ${saleTokenInfo.symbol}`;
-}
+      const saleTokenInfo = await getTokenInfo(saleTokenAddress);
+      const tokenAmountUnits = parseFloat(rv.tokenAmount) / (10 ** saleTokenInfo.decimals);
+      return `You bought ${tokenAmountUnits.toFixed(2)} ${saleTokenInfo.symbol}`;
+    }
     case 'Withdrawn': {
       const tokenInfo = await getTokenInfo(rv.token);
-      const amountUnits = fromTokenWeiToUnits(rv.amount, tokenInfo.decimals);
-      return `Token: ${tokenInfo.symbol}, Amount: ${parseFloat(amountUnits).toFixed(2)}, To: ${rv.owner}`;
+      const amountUnits = parseFloat(rv.amount) / (10 ** tokenInfo.decimals);
+      return `Token: ${tokenInfo.symbol}, Amount: ${amountUnits.toFixed(2)}, To: ${rv.owner}`;
     }
     case 'Paused': return `By: ${rv.account}`;
     case 'Unpaused': return `By: ${rv.account}`;
