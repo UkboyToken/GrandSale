@@ -1078,28 +1078,31 @@
     }
 
     async function updateWithdrawDropdown() {
-      if (!contract) return;
-      try {
-        const select = document.getElementById('withdraw-token');
-        select.innerHTML = '<option value="">Select Token to Withdraw</option>';
-        const acceptedTokens = await fetchAcceptedPaymentTokens();
-        const tokens = new Set([NATIVE_TOKEN_ADDRESS, saleTokenAddress, ...acceptedTokens]);
-        for (const address of tokens) {
-          let balance = address === NATIVE_TOKEN_ADDRESS 
-            ? await web3.eth.getBalance(CONTRACT_ADDRESS)
-            : await new web3.eth.Contract(ERC20ABI, address).methods.balanceOf(CONTRACT_ADDRESS).call();
-          if (BigInt(balance) > 0) {
-            const info = await getTokenInfo(address);
-            const option = document.createElement('option');
-            option.value = address;
-            option.textContent = `${info.name} (${info.symbol}) - Balance: ${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)}`;
-            select.appendChild(option);
-          }
-        }
-      } catch (error) {
-        showError('owner', "Error updating withdraw dropdown: " + error.message);
+  if (!contract) return;
+  try {
+    const select = document.getElementById('withdraw-token');
+    select.innerHTML = '<option value="">Select Token to Withdraw</option>';
+    const acceptedTokens = await fetchAcceptedPaymentTokens();
+    const tokens = new Set([NATIVE_TOKEN_ADDRESS, saleTokenAddress, ...acceptedTokens]);
+    for (const address of tokens) {
+      let balance;
+      if (address === NATIVE_TOKEN_ADDRESS) balance = await web3.eth.getBalance(CONTRACT_ADDRESS);
+      else {
+        const tokenContract = new web3.eth.Contract(ERC20ABI, address);
+        balance = await tokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
+      }
+      if (BigInt(balance) > 0) {
+        const info = await getTokenInfo(address);
+        const option = document.createElement('option');
+        option.value = address;
+        option.textContent = `${info.name} (${info.symbol}) - Balance: ${parseFloat(web3.utils.fromWei(balance, 'ether')).toFixed(2)}`;
+        select.appendChild(option);
       }
     }
+  } catch (error) {
+    showError('owner', "Error updating withdraw dropdown: " + error.message);
+  }
+}
 
     async function updateAllDropdowns() {
       await updatePaymentTokenDropdowns();
@@ -1502,7 +1505,7 @@ async function updateTokenReceiveInfo() {
     const rewardPercent = paymentTokenData.reward;
     const rewardAmount = rewardPercent > 0 ? (BigInt(tokenAmount) * BigInt(rewardPercent) / BigInt(100)) : BigInt(0);
     const totalReceive = BigInt(tokenAmount) + BigInt(rewardAmount);
-    infoDiv.textContent = `You will receive: ${parseFloat(web3.utils.fromWei(totalReceive.toString(), 'ether')).toFixed(2)} ${saleTokenSymbol} (${parseFloat(web3.utils.fromWei(tokenAmount.toString(), 'ether')).toFixed(2)} + ${parseFloat(web3.utils.fromWei(rewardAmount.toString(), 'ether')).toFixed(2)} reward)`;
+    infoDiv.textContent = `You will receive: ${parseFloat(web3.utils.fromWei(totalReceive.toString(), 'ether')).toFixed(2)} ${saleTokenSymbol} (${parseFloat(web3.utils.fromWei(tokenAmount.toString())).toFixed(2)} + ${parseFloat(web3.utils.fromWei(rewardAmount.toString())).toFixed(2)} reward)`;
 
     if (tokenAddress !== NATIVE_TOKEN_ADDRESS) {
       const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
