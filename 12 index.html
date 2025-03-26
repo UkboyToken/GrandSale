@@ -1531,7 +1531,7 @@ async function withdraw() {
 
 async function updateAllDropdowns() {
   if (!contract) return;
-  const acceptedTokens = await fetchAcceptedPaymentTokens();
+  const acceptedTokens = await getAcceptedPaymentTokens();
   const dropdowns = [
     'payment-token-select',
     'approve-token-select',
