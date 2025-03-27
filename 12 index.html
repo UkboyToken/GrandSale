@@ -1600,7 +1600,7 @@ async function updateTokenReceiveInfo() {
     const totalReceive = tokenAmount + rewardAmount;
 
     const formatNumber = (num) => num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    infoDiv.textContent = You will receive ~${formatNumber(totalReceive)} ${saleTokenSymbol} (${formatNumber(tokenAmount)} + ${formatNumber(rewardAmount)} reward)`;
+    infoDiv.textContent = 'You will receive ~${formatNumber(totalReceive)} ${saleTokenSymbol} (${formatNumber(tokenAmount)} + ${formatNumber(rewardAmount)} reward)`;
 
     if (tokenAddress !== NATIVE_TOKEN_ADDRESS) {
       const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
