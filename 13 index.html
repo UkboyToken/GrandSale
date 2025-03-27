@@ -288,23 +288,25 @@
  <button id="admin-btn" onclick="showSection('owner')" style="display: none;">Admin</button>
  </nav>
  <div id="home" class="section active">
- <h2>Grand Sale</h2>
- <table class="contract-info-table">
- <thead>
- <tr>
- <th>Detail</th>
- <th>Value</th>
- </tr>
- </thead>
- <tbody>
- <tr><td>Contract Address</td><td id="contract-address">Connect First<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button></td></tr>
- <tr><td>Sale Token</td><td id="sale-token">Connect First<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button></td></tr>
- <tr><td>Total Unsold</td><td id="total-unsold">Connect First</td></tr>
- <tr><td>Minimum Buy to Reward</td><td id="min-buy-to-reward">Connect First</td></tr>
- <tr><td>Total Sold</td><td id="total-sold">Connect First</td></tr>
- <tr><td>Total Rewarded</td><td id="total-rewarded">Connect First</td></tr>
- </tbody>
- </table>
+      <h2>Grand Sale</h2>
+      <table class="contract-info-table">
+        <thead>
+          <tr>
+            <th>Detail</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Sale Status</td><td id="sale-status">Connect</td></tr>
+          <tr><td>Contract Address</td><td id="contract-address">Connect<button class="copy-btn" onclick="copyToClipboard('contract-address')">Copy</button></td></tr>
+          <tr><td>Sale Token</td><td id="sale-token">Connect<button class="copy-btn" onclick="copyToClipboard('sale-token')">Copy</button></td></tr>
+          <tr><td>Total Unsold</td><td id="total-unsold">Connect</td></tr>
+          <tr><td>Minimum Buy to Reward</td><td id="min-buy-to-reward">Connect</td></tr>
+          <tr><td>Total Sold</td><td id="total-sold">Connect</td></tr>
+          <tr><td>Total Rewarded</td><td id="total-rewarded">Connect</td></tr>
+        </tbody>
+      </table>
+      
  <div>
  <h3>Accepted Payment Tokens</h3>
  <table class="payment-tokens-table" id="payment-tokens-table">
@@ -319,11 +321,11 @@
  <tbody id="payment-tokens-body"></tbody>
  </table>
  </div>
+ 
  <div class="control-group">
  <h3>Your Balance</h3>
  <p>Sale Token Balance: <span id="user-sale-balance">0</span></p>
  </div>
-
  <div class="control-group">
  <h3>Buy Tokens</h3>
  <div class="control-row">
@@ -424,8 +426,8 @@
  </div>
  </div>
  <div class="control-group">
- <h3>Contract Status</h3>
- <p>Status: <span id="contract-status">Unknown</span></p>
+ <h3>Sale status</h3>
+ <p>Status: <span id="contract-status">Connect</span></p>
  <button id="toggle-pause-btn" class="control-btn" onclick="togglePause()">Toggle Pause</button>
  </div>
  <div class="control-group">
@@ -606,7 +608,7 @@ async function updatePaymentTokensTable() {
     const paused = await contract.methods.paused().call();
     const statusText = paused ? 'Paused' : 'Live';
     const statusRow = document.createElement('tr');
-    statusRow.innerHTML = `<td colspan="4" style="text-align: center; font-weight: bold;">Contract Status: ${statusText}</td>`;
+    statusRow.innerHTML = `<td colspan="4" style="text-align: center; font-weight: bold;">Sale Status: ${statusText}</td>`;
     tbody.appendChild(statusRow);
     for (const tokenAddress of acceptedTokens) {
       const tokenInfo = await contract.methods.paymentTokens(tokenAddress).call();
@@ -738,12 +740,12 @@ async function disconnectWallet() {
   document.getElementById('home-btn').style.display = 'none';
   document.getElementById('admin-btn').style.display = 'none';
   document.getElementById('history').style.display = 'none';
-  document.getElementById('contract-address').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'contract-address\')">Copy</button>';
-  document.getElementById('sale-token').innerHTML = 'Connect First<button class="copy-btn" onclick="copyToClipboard(\'sale-token\')">Copy</button>';
-  document.getElementById('total-unsold').textContent = 'Connect First';
-  document.getElementById('min-buy-to-reward').textContent = 'Connect First';
-  document.getElementById('total-sold').textContent = 'Connect First';
-  document.getElementById('total-rewarded').textContent = 'Connect First';
+  document.getElementById('contract-address').innerHTML = 'Connect<button class="copy-btn" onclick="copyToClipboard(\'contract-address\')">Copy</button>';
+  document.getElementById('sale-token').innerHTML = 'Connect<button class="copy-btn" onclick="copyToClipboard(\'sale-token\')">Copy</button>';
+  document.getElementById('total-unsold').textContent = 'Connect';
+  document.getElementById('min-buy-to-reward').textContent = 'Connect';
+  document.getElementById('total-sold').textContent = 'Connect';
+  document.getElementById('total-rewarded').textContent = 'Connect';
   document.getElementById('payment-tokens-body').innerHTML = '';
   document.getElementById('contract-status').textContent = 'Unknown';
   document.getElementById('approve-token-select').innerHTML = '<option value="">Select Payment Token</option>';
@@ -826,7 +828,7 @@ async function refreshPage() {
   await updateUserBalance();
   await updateAllDropdowns();
   await updatePaymentTokensTable();
-  logEvent('Refresh', 'град refreshed successfully');
+  logEvent('Refresh', 'Page refreshed successfully');
 }
 
 async function initializeAfterConnect() {
@@ -1090,280 +1092,279 @@ async function updateAllDropdowns() {
 // Admin Functions
 async function addPaymentToken() {
   if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-  const paymentToken = document.getElementById('payment-token-address').value.trim();
-  if (!web3.utils.isAddress(paymentToken)) return showError('owner', 'Invalid payment token address');
+  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) {
+    return showError('owner', 'Only the contract owner can add payment tokens!');
+  }
+  const tokenAddress = document.getElementById('payment-token-address').value.trim();
+  if (!web3.utils.isAddress(tokenAddress)) {
+    return showError('owner', 'Invalid token address!');
+  }
   try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
-    const tx = await contract.methods.addPaymentToken(paymentToken).send({ from: userAddress, gasPrice });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    await getTokenInfo(paymentToken);
-    logEvent('Payment Token Added', `Added ${paymentToken}`, true, true, tx.transactionHash);
+    showTxStatus('owner', `Adding ${tokenInfo.symbol} as payment token from ${tokenAddress}...`);
+    const tx = await contract.methods.addPaymentToken(tokenAddress).send({ from: userAddress });
+    showTxStatus('owner', 'Payment token added successfully!');
+    logEvent('PaymentTokenAdded', `Added ${tokenAddress}`, true, true, tx.transactionHash);
     await updateAllDropdowns();
     await updatePaymentTokensTable();
+    document.getElementById('payment-token-address').value = '';
   } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+    showError('owner', "Failed to add payment token: " + error.message, error.transactionHash);
   }
 }
 
 async function removePaymentToken() {
   if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-  const paymentToken = document.getElementById('remove-payment-token-select').value;
-  if (!paymentToken) return showError('owner', 'Please select a payment token');
+  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) {
+    return showError('owner', 'Only the contract owner can remove payment tokens!');
+  }
+  const tokenAddress = document.getElementById('remove-payment-token-select').value;
+  if (!tokenAddress) return showError('owner', 'Please select a payment token to remove!');
   try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
-    const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-    if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
-    const tx = await contract.methods.removePaymentToken(paymentToken).send({ from: userAddress, gasPrice });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Payment Token Removed', `Removed ${paymentToken}`, true, true, tx.transactionHash);
+    showTxStatus('owner', `Removing ${tokenInfo.symbol} from payment tokens at ${tokenAddress}...`);
+    const tx = await contract.methods.removePaymentToken(tokenAddress).send({ from: userAddress });
+    showTxStatus('owner', 'Payment token removed successfully!');
+    logEvent('PaymentTokenRemoved', `Removed ${tokenAddress}`, true, true, tx.transactionHash);
     await updateAllDropdowns();
     await updatePaymentTokensTable();
   } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+    showError('owner', "Failed to remove payment token: " + error.message, error.transactionHash);
   }
 }
 
 async function setRate() {
   if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-  const paymentToken = document.getElementById('rate-token').value;
+  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) {
+    return showError('owner', 'Only the contract owner can set rates!');
+  }
+  const tokenAddress = document.getElementById('rate-token').value;
   const rate = document.getElementById('rate-value').value;
-  if (!paymentToken) return showError('owner', 'Please select a payment token');
-  if (!rate || parseInt(rate) <= 0) return showError('owner', 'Invalid rate');
+  if (!tokenAddress) return showError('owner', 'Please select a payment token!');
+  if (!rate || isNaN(rate) || rate <= 0) return showError('owner', 'Please enter a valid rate!');
   try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
-    const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-    if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
-    const tx = await contract.methods.setRate(paymentToken, rate).send({ from: userAddress, gasPrice });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Rate Set', `Set rate for ${paymentToken} to ${rate}`, true, true, tx.transactionHash);
+    showTxStatus('owner', `Setting rate for ${tokenInfo.symbol} to ${rate}...`);
+    const tx = await contract.methods.setRate(tokenAddress, rate).send({ from: userAddress });
+    showTxStatus('owner', 'Rate set successfully!');
+    logEvent('RateSet', `Set rate for ${tokenAddress} to ${rate}`, true, true, tx.transactionHash);
     await updatePaymentTokensTable();
+    document.getElementById('rate-value').value = '';
   } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+    showError('owner', "Failed to set rate: " + error.message, error.transactionHash);
   }
 }
 
 async function removeRate() {
   if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-  const paymentToken = document.getElementById('rate-token').value;
-  if (!paymentToken) return showError('owner', 'Please select a payment token');
+  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) {
+    return showError('owner', 'Only the contract owner can remove rates!');
+  }
+  const tokenAddress = document.getElementById('rate-token').value;
+  if (!tokenAddress) return showError('owner', 'Please select a payment token!');
   try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
-    const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-    if (!tokenInfo.isAccepted || tokenInfo.rate == 0) return showError('owner', 'No rate set or token not accepted');
-    const tx = await contract.methods.removeRate(paymentToken).send({ from: userAddress, gasPrice });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Rate Removed', `Removed rate for ${paymentToken}`, true, true, tx.transactionHash);
+    showTxStatus('owner', `Removing rate for ${tokenInfo.symbol}...`);
+    const tx = await contract.methods.removeRate(tokenAddress).send({ from: userAddress });
+    showTxStatus('owner', 'Rate removed successfully!');
+    logEvent('RateRemoved', `Removed rate for ${tokenAddress}`, true, true, tx.transactionHash);
     await updatePaymentTokensTable();
   } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+    showError('owner', "Failed to remove rate: " + error.message, error.transactionHash);
   }
 }
 
 async function setReward() {
   if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-  const paymentToken = document.getElementById('reward-token').value;
+  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) {
+    return showError('owner', 'Only the contract owner can set rewards!');
+  }
+  const tokenAddress = document.getElementById('reward-token').value;
   const reward = document.getElementById('reward-value').value;
-  if (!paymentToken) return showError('owner', 'Please select a payment token');
-  if (!reward || parseInt(reward) <= 0 || parseInt(reward) > 100) return showError('owner', 'Reward must be between 1 and 100');
+  if (!tokenAddress) return showError('owner', 'Please select a payment token!');
+  if (!reward || isNaN(reward) || reward < 0 || reward > 100) {
+    return showError('owner', 'Please enter a valid reward percentage (0-100)!');
+  }
   try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
-    const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-    if (!tokenInfo.isAccepted) return showError('owner', 'Payment token not accepted');
-    const tx = await contract.methods.setReward(paymentToken, reward).send({ from: userAddress, gasPrice });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Reward Set', `Set reward for ${paymentToken} to ${reward}%`, true, true, tx.transactionHash);
+    showTxStatus('owner', `Setting reward for ${tokenInfo.symbol} to ${reward}%...`);
+    const tx = await contract.methods.setReward(tokenAddress, reward).send({ from: userAddress });
+    showTxStatus('owner', 'Reward set successfully!');
+    logEvent('RewardSet', `Set reward for ${tokenAddress} to ${reward}%`, true, true, tx.transactionHash);
     await updatePaymentTokensTable();
+    document.getElementById('reward-value').value = '';
   } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+    showError('owner', "Failed to set reward: " + error.message, error.transactionHash);
   }
 }
 
 async function removeReward() {
   if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-  const paymentToken = document.getElementById('reward-token').value;
-  if (!paymentToken) return showError('owner', 'Please select a payment token');
+  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) {
+    return showError('owner', 'Only the contract owner can remove rewards!');
+  }
+  const tokenAddress = document.getElementById('reward-token').value;
+  if (!tokenAddress) return showError('owner', 'Please select a payment token!');
   try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
-    const tokenInfo = await contract.methods.paymentTokens(paymentToken).call();
-    if (!tokenInfo.isAccepted || tokenInfo.reward == 0) return showError('owner', 'No reward set or token not accepted');
-    const tx = await contract.methods.removeReward(paymentToken).send({ from: userAddress, gasPrice });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Reward Removed', `Removed reward for ${paymentToken}`, true, true, tx.transactionHash);
+    showTxStatus('owner', `Removing reward from ${tokenInfo.symbol}...`);
+    const tx = await contract.methods.removeReward(tokenAddress).send({ from: userAddress });
+    showTxStatus('owner', 'Reward removed successfully!');
+    logEvent('RewardRemoved', `Removed reward for ${tokenAddress}`, true, true, tx.transactionHash);
     await updatePaymentTokensTable();
   } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+    showError('owner', "Failed to remove reward: " + error.message, error.transactionHash);
   }
 }
 
 async function setMinBuyToReward() {
   if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
-  const minBuy = document.getElementById('min-buy-value').value;
-  if (!minBuy || parseFloat(minBuy) <= 0) return showError('owner', 'Invalid minimum buy amount');
-  try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
-    const weiAmount = web3.utils.toWei(minBuy, 'ether');
-    const tx = await contract.methods.setMinBuyToReward(weiAmount).send({ from: userAddress, gasPrice });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Min Buy Set', `Set minimum buy to ${minBuy}`, true, true, tx.transactionHash);
-    await updateContractInfo();
-  } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) {
+    return showError('owner', 'Only the contract owner can set minimum buy to reward!');
   }
-}
-
-async function removeMinBuyToReward() {
-  if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+  const minBuy = document.getElementById('min-buy-value').value;
+  if (!minBuy || isNaN(minBuy) || minBuy < 0) {
+    return showError('owner', 'Please enter a valid minimum buy amount!');
+  }
+  const minBuyWei = web3.utils.toWei(minBuy, 'ether');
   try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
-    const minBuy = await contract.methods.minBuyToReward().call();
-    if (minBuy == 0) return showError('owner', 'Minimum buy already removed');
-    const tx = await contract.methods.removeMinBuyToReward().send({ from: userAddress, gasPrice });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Min Buy Removed', `Removed minimum buy`, true, true, tx.transactionHash);
+    showTxStatus('owner', `Setting minimum buy to reward to ${minBuy}...`);
+    const tx = await contract.methods.setMinBuyToReward(minBuyWei).send({ from: userAddress });
+    showTxStatus('owner', 'Minimum buy to reward set successfully!');
+    logEvent('MinBuyToRewardSet', `Set minimum buy to ${minBuy}`, true, true, tx.transactionHash);
     await updateContractInfo();
+    document.getElementById('min-buy-value').value = '';
   } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+    showError('owner', "Failed to set minimum buy to reward: " + error.message, error.transactionHash);
   }
 }
 
 async function togglePause() {
   if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) {
+    return showError('owner', 'Only the contract owner can toggle pause!');
+  }
   try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
     const isPaused = await contract.methods.paused().call();
     const method = isPaused ? contract.methods.unpause() : contract.methods.pause();
-    const tx = await method.send({ from: userAddress, gasPrice });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Pause Toggled', `${isPaused ? 'Unpaused' : 'Paused'}`, true, true, tx.transactionHash);
+    showTxStatus('owner', `${isPaused ? 'Unpausing' : 'Pausing'} contract...`);
+    const tx = await method.send({ from: userAddress });
+    showTxStatus('owner', `Contract ${isPaused ? 'unpaused' : 'paused'} successfully!`);
+    logEvent(isPaused ? 'Unpaused' : 'Paused', `Contract ${isPaused ? 'unpaused' : 'paused'}`, true, true, tx.transactionHash);
     await updateContractInfo();
   } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+    showError('owner', `Failed to ${await contract.methods.paused().call() ? 'unpause' : 'pause'} contract: ${error.message}`, error.transactionHash);
   }
 }
 
 async function withdraw() {
   if (!contract) return showError('owner', 'Please connect your wallet first!');
-  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) return showError('owner', 'Only owner can perform this action');
+  if (userAddress.toLowerCase() !== ownerAddress.toLowerCase()) {
+    return showError('owner', 'Only the contract owner can withdraw!');
+  }
   const tokenAddress = document.getElementById('withdraw-token').value;
   const amount = document.getElementById('withdraw-amount').value;
-  if (!tokenAddress) return showError('owner', 'Please select a token');
-  if (!amount || parseFloat(amount) <= 0) return showError('owner', 'Invalid amount');
+  if (!tokenAddress) return showError('owner', 'Please select a token to withdraw!');
+  if (!amount || isNaN(amount) || amount <= 0) return showError('owner', 'Please enter a valid amount!');
+  const amountWei = web3.utils.toWei(amount, 'ether');
   try {
-    showTxStatus('owner', 'Pending...');
-    const gasPrice = await web3.eth.getGasPrice();
-    const weiAmount = web3.utils.toWei(amount, 'ether');
-    let balance;
-    if (tokenAddress === NATIVE_TOKEN_ADDRESS) balance = await web3.eth.getBalance(CONTRACT_ADDRESS);
-    else {
-      const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
-      balance = await tokenContract.methods.balanceOf(CONTRACT_ADDRESS).call();
-    }
-    if (BigInt(balance) < BigInt(weiAmount)) return showError('owner', 'Insufficient balance in contract');
-    const tx = await contract.methods.withdraw(tokenAddress, weiAmount).send({ from: userAddress, gasPrice, value: 0 });
-    showTxStatus('owner', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Withdraw Success', `Withdrew ${amount} from ${tokenAddress}`, true, true, tx.transactionHash);
-    await updateWithdrawDropdown();
+    showTxStatus('owner', `Withdrawing ${amount} ${tokenInfo.symbol}...`);
+    const tx = await contract.methods.withdraw(tokenAddress, amountWei).send({ from: userAddress });
+    showTxStatus('owner', 'Withdrawal successful!');
+    logEvent('Withdrawn', `Withdrew ${amount} from ${tokenAddress}`, true, true, tx.transactionHash);
+    await updateContractInfo();
+    document.getElementById('withdraw-amount').value = '';
   } catch (error) {
-    showTxStatus('owner', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('owner', message, error.transactionHash);
+    showError('owner', "Failed to withdraw: " + error.message, error.transactionHash);
   }
+}
+
+async function updateAllDropdowns() {
+  if (!contract) return;
+  const acceptedTokens = await getAcceptedPaymentTokens();
+  const dropdowns = [
+    'payment-token-select',
+    'approve-token-select',
+    'rate-token',
+    'reward-token',
+    'remove-payment-token-select',
+    'withdraw-token',
+    'payment-token-to-metamask'
+  ];
+  for (const id of dropdowns) {
+    const select = document.getElementById(id);
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">Select Payment Token</option>';
+    if (id === 'withdraw-token') {
+      select.options.add(new Option('Native POL', NATIVE_TOKEN_ADDRESS));
+    }
+    for (const tokenAddress of acceptedTokens) {
+      const tokenInfo = await getTokenInfo(tokenAddress);
+      const option = new Option(`${tokenInfo.name} (${tokenInfo.symbol})`, tokenAddress);
+      select.options.add(option);
+    }
+    select.value = currentValue && acceptedTokens.includes(currentValue) ? currentValue : '';
+  }
+  await updateBuyBalance();
+  await updateApproveBalance();
 }
 
 // User Functions
 async function approveToken() {
   if (!contract) return showError('home', 'Please connect your wallet first!');
-  const paymentToken = document.getElementById('approve-token-select').value;
-  if (!paymentToken) return showError('home', 'Please select a payment token');
+  const tokenAddress = document.getElementById('approve-token-select').value;
+  if (!tokenAddress || tokenAddress === NATIVE_TOKEN_ADDRESS) return showError('home', 'Please select a valid ERC20 token to approve!');
+  const amountInput = document.getElementById('payment-amount').value;
+  if (!amountInput || isNaN(amountInput) || amountInput <= 0) {
+    return showError('home', 'Please enter a valid amount to approve!');
+  }
+  const amountWei = web3.utils.toWei(amountInput, 'ether');
   try {
-    showTxStatus('home', 'Pending...');
-    const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
-    const maxAmount = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
-    const gasPrice = await web3.eth.getGasPrice();
-    const tx = await tokenContract.methods.approve(CONTRACT_ADDRESS, maxAmount).send({ from: userAddress, gasPrice });
-    showTxStatus('home', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    const tokenInfo = await getTokenInfo(paymentToken);
-    logEvent('Approve Success', `Approved unlimited for ${tokenInfo.symbol}`, true, false, tx.transactionHash);
-    await updateApproveBalance();
+    const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
+    showTxStatus('home', `Approving ${amountInput} ${tokenInfo.symbol} for spending...`);
+    const tx = await tokenContract.methods.approve(CONTRACT_ADDRESS, amountWei).send({ from: userAddress });
+    showTxStatus('home', 'Token approved successfully!');
+    logEvent('Approved', `Approved ${amountInput} ${tokenAddress}`, true, false, tx.transactionHash);
     await updateTokenReceiveInfo();
   } catch (error) {
-    showTxStatus('home', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('home', message, error.transactionHash);
+    showError('home', "Failed to approve token: " + error.message, error.transactionHash);
   }
 }
 
 async function buyTokens() {
   if (!contract) return showError('home', 'Please connect your wallet first!');
-  const paymentToken = document.getElementById('payment-token-select').value;
-  const paymentAmount = document.getElementById('payment-amount').value;
-  if (!paymentToken) return showError('home', 'Please select a payment token');
-  if (!paymentAmount || parseFloat(paymentAmount) <= 0) return showError('home', 'Invalid payment amount');
+  const paused = await contract.methods.paused().call();
+  if (paused) {
+    showError('home', 'Sale is Paused');
+    return;
+  }
+  const tokenAddress = document.getElementById('payment-token-select').value;
+  const amountInput = document.getElementById('payment-amount').value;
+  if (!tokenAddress) return showError('home', 'Please select a payment token!');
+  if (!amountInput || isNaN(amountInput) || amountInput <= 0) {
+    return showError('home', 'Please enter a valid amount!');
+  }
+  const tokenInfo = await getTokenInfo(tokenAddress);
+  const paymentDecimals = tokenInfo.decimals;
+  const amountWei = (parseFloat(amountInput) * (10 ** paymentDecimals)).toString(); // Convert to string for contract call
   try {
-    showTxStatus('home', 'Pending...');
-    const weiAmount = web3.utils.toWei(paymentAmount, 'ether');
-    const gasPrice = await web3.eth.getGasPrice();
-    let tx;
-    if (paymentToken === NATIVE_TOKEN_ADDRESS) {
-      const balance = await web3.eth.getBalance(userAddress);
-      if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient POL balance');
-      tx = await contract.methods.buyWithNative().send({ from: userAddress, value: weiAmount, gasPrice });
-      logEvent('Buy Success', `Bought with ${paymentAmount} POL`, true, false, tx.transactionHash);
+    if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
+      showTxStatus('home', `Buying tokens with ${amountInput} POL...`);
+      const tx = await contract.methods.buyWithNative().send({ from: userAddress, value: amountWei });
+      showTxStatus('home', 'Purchase successful!');
+      logEvent('TokenPurchased', `Bought tokens with ${amountInput} POL`, true, false, tx.transactionHash);
     } else {
-      const tokenContract = new web3.eth.Contract(ERC20ABI, paymentToken);
-      const balance = await tokenContract.methods.balanceOf(userAddress).call();
-      if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient token balance');
+      const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
       const allowance = await tokenContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
-      if (BigInt(allowance) < BigInt(weiAmount)) return showError('home', 'Insufficient allowance. Please approve first.');
-      tx = await contract.methods.buyWithToken(paymentToken, weiAmount).send({ from: userAddress, gasPrice });
-      const tokenInfo = await getTokenInfo(paymentToken);
-      logEvent('Buy Success', `Bought with ${paymentAmount} ${tokenInfo.symbol}`, true, false, tx.transactionHash);
+      if (parseFloat(allowance) < parseFloat(amountWei)) {
+        return showError('home', 'Insufficient allowance. Please approve the token first!');
+      }
+      showTxStatus('home', `Buying tokens with ${amountInput} ${tokenInfo.symbol}...`);
+      const tx = await contract.methods.buyWithToken(tokenAddress, amountWei).send({ from: userAddress });
+      showTxStatus('home', 'Purchase successful!');
+      logEvent('TokenPurchased', `Bought tokens with ${amountInput} ${tokenInfo.symbol}`, true, false, tx.transactionHash);
     }
-    showTxStatus('home', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    await updateContractInfo();
     await updateUserBalance();
+    await updateContractInfo();
     await updatePaymentTokensTable();
-    await updateBuyBalance();
+    document.getElementById('payment-amount').value = '';
+    await updateTokenReceiveInfo();
   } catch (error) {
-    showTxStatus('home', '');
-    const message = error.message.includes('revert') ? 'Failed to secure funds' : error.message;
-    showError('home', message, error.transactionHash);
+    showError('home', "Failed to buy tokens: " + error.message, error.transactionHash);
   }
 }
 
@@ -1371,23 +1372,20 @@ async function sendTokens() {
   if (!contract) return showError('home', 'Please connect your wallet first!');
   const recipient = document.getElementById('send-recipient').value.trim();
   const amount = document.getElementById('send-amount').value;
-  if (!web3.utils.isAddress(recipient)) return showError('home', 'Invalid recipient address');
-  if (!amount || parseFloat(amount) <= 0) return showError('home', 'Invalid amount');
+  if (!web3.utils.isAddress(recipient)) return showError('home', 'Invalid recipient address!');
+  if (!amount || isNaN(amount) || amount <= 0) return showError('home', 'Please enter a valid amount!');
+  const amountWei = web3.utils.toWei(amount, 'ether');
   try {
-    showTxStatus('home', 'Pending...');
     const saleTokenContract = new web3.eth.Contract(ERC20ABI, saleTokenAddress);
-    const weiAmount = web3.utils.toWei(amount, 'ether');
-    const balance = await saleTokenContract.methods.balanceOf(userAddress).call();
-    if (BigInt(balance) < BigInt(weiAmount)) return showError('home', 'Insufficient sale token balance');
-    const gasPrice = await web3.eth.getGasPrice();
-    const tx = await saleTokenContract.methods.transfer(recipient, weiAmount).send({ from: userAddress, gasPrice });
-    showTxStatus('home', `Success! Tx: <a href="https://amoy.polygonscan.com/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash.slice(0, 10)}...</a>`);
-    logEvent('Send Success', `Sent ${amount} ${saleTokenSymbol} to ${recipient}`, true, false, tx.transactionHash);
+    showTxStatus('home', `Sending ${amount} ${saleTokenSymbol} to ${recipient}...`);
+    const tx = await saleTokenContract.methods.transfer(recipient, amountWei).send({ from: userAddress });
+    showTxStatus('home', 'Tokens sent successfully!');
+    logEvent('TokenTransfer', `Sent ${amount} ${saleTokenSymbol} to ${recipient}`, true, false, tx.transactionHash);
     await updateUserBalance();
+    document.getElementById('send-recipient').value = '';
+    document.getElementById('send-amount').value = '';
   } catch (error) {
-    showTxStatus('home', '');
-    const message = error.message.includes('revert') ? 'Contract not allowed' : error.message;
-    showError('home', message, error.transactionHash);
+    showError('home', "Failed to send tokens: " + error.message, error.transactionHash);
   }
 }
 
@@ -1450,22 +1448,26 @@ async function updateTokenReceiveInfo() {
 
 function setupEventListeners() {
   if (!contract) return;
-  contract.events.allEvents({ fromBlock: 'latest' }, async (error, event) => {
-    if (error) {
-      console.error('Error on event', error);
-      return;
-    }
-    const isOwner = userAddress && userAddress.toLowerCase() === ownerAddress?.toLowerCase();
-    const txHash = event.transactionHash;
-    const details = formatEventDetails(event);
-    const isAdminEvent = [
-      'PaymentTokenAdded', 'PaymentTokenRemoved', 'RateSet', 'RateRemoved', 
-      'RewardSet', 'RewardRemoved', 'MinBuyToRewardSet', 'MinBuyToRewardRemoved', 
-      'Withdrawn', 'Paused', 'Unpaused'
-    ].includes(event.event);
-    if (!isOwner && isAdminEvent) return;
-    logEvent(event.event, details, true, isAdminEvent, txHash);
-  });
+  contract.events.allEvents()
+    .on('data', async (event) => {
+      const isOwner = userAddress.toLowerCase() === ownerAddress.toLowerCase();
+      const isAdminEvent = ['PaymentTokenAdded', 'PaymentTokenRemoved', 'RateSet', 'RateRemoved', 'RewardSet', 'RewardRemoved', 'MinBuyToRewardSet', 'MinBuyToRewardRemoved', 'Withdrawn', 'Paused', 'Unpaused'].includes(event.event);
+      if (!isOwner && isAdminEvent) return;
+      const rv = event.returnValues;
+      if (!isAdminEvent) {
+        if (event.event === 'Approved' && rv.approver.toLowerCase() !== userAddress.toLowerCase()) return;
+        if (event.event === 'NotEligible' && rv.buyer.toLowerCase() !== userAddress.toLowerCase()) return;
+        if (event.event === 'RewardGranted' && rv.buyer.toLowerCase() !== userAddress.toLowerCase()) return;
+        if (event.event === 'TokenPurchased' && rv.buyer.toLowerCase() !== userAddress.toLowerCase()) return;
+      }
+      const details = formatEventDetails(event);
+      logEvent(event.event, details, true, isAdminEvent, event.transactionHash);
+      await updateContractInfo();
+      await updateUserBalance();
+      await updatePaymentTokensTable();
+      await updateAllDropdowns();
+    })
+    .on('error', (error) => console.error('Event listener error:', error));
 }
 
 function formatEventDetails(event) {
