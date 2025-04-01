@@ -427,7 +427,7 @@
  </div>
  <div class="control-group">
  <h3>Sale status</h3>
- <p>Status: <span id="contract-status">Connect</span></p>
+ <p>Status: <span id="sale-status">Connect</span></p>
  <button id="toggle-pause-btn" class="control-btn" onclick="togglePause()">Toggle Pause</button>
  </div>
  <div class="control-group">
@@ -747,7 +747,7 @@ async function disconnectWallet() {
   document.getElementById('total-sold').textContent = 'Connect';
   document.getElementById('total-rewarded').textContent = 'Connect';
   document.getElementById('payment-tokens-body').innerHTML = '';
-  document.getElementById('contract-status').textContent = 'Unknown';
+  document.getElementById('sale-status').textContent = 'Connect';
   document.getElementById('approve-token-select').innerHTML = '<option value="">Select Payment Token</option>';
   document.getElementById('payment-token-select').innerHTML = '<option value="">Select Payment Token</option>';
   document.getElementById('rate-token').innerHTML = '<option value="">Select Payment Token</option>';
@@ -918,7 +918,7 @@ async function updateContractInfo() {
     document.getElementById('min-buy-to-reward').textContent = parseFloat(web3.utils.fromWei(minBuyToReward, 'ether')).toFixed(2);
     document.getElementById('total-sold').textContent = parseFloat(web3.utils.fromWei(totalSold, 'ether')).toFixed(2);
     document.getElementById('total-rewarded').textContent = parseFloat(web3.utils.fromWei(totalRewarded, 'ether')).toFixed(2);
-    document.getElementById('contract-status').textContent = paused ? 'Paused' : 'Live';
+    document.getElementById('sale-status').textContent = paused ? 'Paused' : 'Live';
   } catch (error) {
     showError('home', "Error updating contract info: " + error.message);
   }
