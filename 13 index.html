@@ -1100,7 +1100,7 @@ async function addPaymentToken() {
     return showError('owner', 'Invalid token address!');
   }
   try {
-    showTxStatus('owner', `Adding ${info.symbol} as payment token from ${tokenAddress}...`);
+    showTxStatus('owner', `Adding ${tokenInfo.symbol} as payment token from ${tokenAddress}...`);
     const tx = await contract.methods.addPaymentToken(tokenAddress).send({ from: userAddress });
     showTxStatus('owner', 'Payment token added successfully!');
     logEvent('PaymentTokenAdded', `Added ${tokenAddress}`, true, true, tx.transactionHash);
@@ -1120,7 +1120,7 @@ async function removePaymentToken() {
   const tokenAddress = document.getElementById('remove-payment-token-select').value;
   if (!tokenAddress) return showError('owner', 'Please select a payment token to remove!');
   try {
-    showTxStatus('owner', `Removing ${info.symbol} from payment tokens at ${tokenAddress}...`);
+    showTxStatus('owner', `Removing ${tokenInfo.symbol} from payment tokens at ${tokenAddress}...`);
     const tx = await contract.methods.removePaymentToken(tokenAddress).send({ from: userAddress });
     showTxStatus('owner', 'Payment token removed successfully!');
     logEvent('PaymentTokenRemoved', `Removed ${tokenAddress}`, true, true, tx.transactionHash);
@@ -1141,7 +1141,7 @@ async function setRate() {
   if (!tokenAddress) return showError('owner', 'Please select a payment token!');
   if (!rate || isNaN(rate) || rate <= 0) return showError('owner', 'Please enter a valid rate!');
   try {
-    showTxStatus('owner', `Setting rate for ${info.symbol} to ${rate}...`);
+    showTxStatus('owner', `Setting rate for ${tokenInfo.symbol} to ${rate}...`);
     const tx = await contract.methods.setRate(tokenAddress, rate).send({ from: userAddress });
     showTxStatus('owner', 'Rate set successfully!');
     logEvent('RateSet', `Set rate for ${tokenAddress} to ${rate}`, true, true, tx.transactionHash);
@@ -1160,7 +1160,7 @@ async function removeRate() {
   const tokenAddress = document.getElementById('rate-token').value;
   if (!tokenAddress) return showError('owner', 'Please select a payment token!');
   try {
-    showTxStatus('owner', `Removing rate for ${info.symbol}...`);
+    showTxStatus('owner', `Removing rate for ${tokenInfo.symbol}...`);
     const tx = await contract.methods.removeRate(tokenAddress).send({ from: userAddress });
     showTxStatus('owner', 'Rate removed successfully!');
     logEvent('RateRemoved', `Removed rate for ${tokenAddress}`, true, true, tx.transactionHash);
@@ -1182,7 +1182,7 @@ async function setReward() {
     return showError('owner', 'Please enter a valid reward percentage (0-100)!');
   }
   try {
-    showTxStatus('owner', `Setting reward for ${info.symbol} to ${reward}%...`);
+    showTxStatus('owner', `Setting reward for ${tokenInfo.symbol} to ${reward}%...`);
     const tx = await contract.methods.setReward(tokenAddress, reward).send({ from: userAddress });
     showTxStatus('owner', 'Reward set successfully!');
     logEvent('RewardSet', `Set reward for ${tokenAddress} to ${reward}%`, true, true, tx.transactionHash);
@@ -1201,7 +1201,7 @@ async function removeReward() {
   const tokenAddress = document.getElementById('reward-token').value;
   if (!tokenAddress) return showError('owner', 'Please select a payment token!');
   try {
-    showTxStatus('owner', `Removing reward from ${info.symbol}...`);
+    showTxStatus('owner', `Removing reward from ${tokenInfo.symbol}...`);
     const tx = await contract.methods.removeReward(tokenAddress).send({ from: userAddress });
     showTxStatus('owner', 'Reward removed successfully!');
     logEvent('RewardRemoved', `Removed reward for ${tokenAddress}`, true, true, tx.transactionHash);
@@ -1262,7 +1262,7 @@ async function withdraw() {
   if (!amount || isNaN(amount) || amount <= 0) return showError('owner', 'Please enter a valid amount!');
   const amountWei = web3.utils.toWei(amount, 'ether');
   try {
-    showTxStatus('owner', `Withdrawing ${amount} ${info.symbol}...`);
+    showTxStatus('owner', `Withdrawing ${amount} ${tokenInfo.symbol}...`);
     const tx = await contract.methods.withdraw(tokenAddress, amountWei).send({ from: userAddress });
     showTxStatus('owner', 'Withdrawal successful!');
     logEvent('Withdrawn', `Withdrew ${amount} from ${tokenAddress}`, true, true, tx.transactionHash);
@@ -1285,7 +1285,7 @@ async function approveToken() {
   const amountWei = web3.utils.toWei(amountInput, 'ether');
   try {
     const tokenContract = new web3.eth.Contract(ERC20ABI, tokenAddress);
-    showTxStatus('home', `Approving ${amountInput} ${info.symbol} for spending...`);
+    showTxStatus('home', `Approving ${amountInput} ${tokenInfo.symbol} for spending...`);
     const tx = await tokenContract.methods.approve(CONTRACT_ADDRESS, amountWei).send({ from: userAddress });
     showTxStatus('home', 'Token approved successfully!');
     logEvent('Approved', `Approved ${amountInput} ${tokenAddress}`, true, false, tx.transactionHash);
